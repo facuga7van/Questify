@@ -1,0 +1,54 @@
+
+.titleContainer {
+    display: flex;
+    align-items: center;
+    user-select: none;
+    color: rgba(0, 0, 0, 70%);
+  }
+  #taskInput, #descInput {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: white;
+  }
+  
+  #taskInput::placeholder, #descInput::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .titleImage {
+    width: 7rem;
+    height: 100%;
+  }
+  
+  .imageBtn {
+    width: 1rem;
+    transition: filter 0.3s ease;
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0));
+  }
+  
+  .imageBtn:hover {
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
+  }
+  .rpgBtn {
+    padding: 10px 20px;
+    background-color: #795649; /* A dark wood-like brown */
+    color: #f4e5c3; /* A parchment-like off-white */
+    border: 2px solid #c0a080; /* A lighter brown border */
+    font-family: 'Goudy Bookletter 1911', serif; /* A font with an old-style feel */
+    font-size: 18px;
+    text-shadow: 1px 1px 0px #a67c52; /* Gives a bit of depth to the text */
+    box-shadow: 2px 2px 0px #a67c52; /* Simulates an inset look */
+    border-radius: 4px; /* Slightly rounded corners */
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .dividerImg{
+    width: 30rem;
+  }
+  .rpgBtn:hover {
+    background-color: #5e4035; /* A lighter, worn wood color for hover */
+    
+  }
+  
+  .rpgBtn:active {
+    box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
+    transform: translateY(2px); /* Moves the button down to simulate a press */
+  }

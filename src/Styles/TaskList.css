@@ -1,0 +1,69 @@
+
+.taskContainer{
+    display: flex;
+     
+     align-items: center; /* Alinea verticalmente los elementos */
+     min-height: 2rem;
+     margin: 0 1rem;
+     border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+   }
+   
+   .taskContent {
+     flex-grow: 1; /* Permite que el contenido del texto se expanda para llenar el espacio restante */
+   }
+   .taskName{
+     font-size: 1.5rem;
+   }
+   .taskDesc{
+     font-family: 'Crimson Pro';
+     opacity: 0.85;
+     margin-left: 1rem;
+   }
+   .taskImage{
+     background-image: url("../Assets/Quest.png");
+     
+     width: 1rem; /* Ancho deseado */
+     height: 1rem; /* Altura deseada */
+     background-size: contain; /* Para ajustar la imagen al tamaño del contenedor */
+     background-repeat: no-repeat;
+     background-position: center center; /* Centra la imagen horizontal y verticalmente */
+   }
+   
+   .taskImgCont {
+     width: 2.5rem; /* Ancho deseado */
+     height: 2.5rem; /* Altura deseada */
+     display: flex; /* Utiliza flexbox para centrar la imagen */
+     justify-content: center; /* Centra horizontalmente */
+     align-items: center; /* Centra verticalmente */
+   }
+   
+   .taskImgCont:hover{
+     cursor: pointer;
+   }
+   .taskImgCont:hover .taskImage {
+     background-image: url("../Assets/QuestHover.png"); /* Cambiar la imagen en hover */
+   }
+   #taskList {
+    max-height: 60vh; /* Ajusta según el tamaño deseado del encabezado */
+    min-height: 25vh; /* Altura mínima deseada */
+    overflow-y: auto; /* Agrega barra de desplazamiento vertical si es necesario */
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 10px; /* Borde redondeado */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.25); /* Sombra difuminada */
+  }
+  
+  /* Oculta la barra de desplazamiento estándar */
+  
+  /* Agrega una imagen como fondo de la pista de la barra de desplazamiento */
+  #taskList::-webkit-scrollbar {
+    background-color: rgba(0, 0, 0, 0);
+    width: 5px;
+    margin-right: 2px;
+  }
+  
+  /* Define la apariencia de la manija de la barra de desplazamiento */
+  #taskList::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    
+  }
