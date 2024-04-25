@@ -69,27 +69,22 @@ ipcMain.on("minimizeApp", () => {
  ipcMain.on('getTasks', async (event: Electron.IpcMainEvent) => {
   try {
     const conn = await getConnection();
-
-    // Ejecutar la consulta SQL para obtener las tareas
-    conn.query('SELECT * FROM task', (error, results: any[], fields: any) => {
+    conn.query('SELECT * FROM task', (error: Error | null, results: any[], fields: any) => {
       if (error) {
-        // Type assertion para especificar el tipo de error
-        const err: Error = error as Error;
-        
-        // En caso de error, responder con el mensaje de error
-        console.error('Error:', err);
-        event.reply('tasks-error', err.message);
+        console.error('Error:', error);
+        event.reply('tasks-error', error.message);
       } else {
-        // En caso de éxito, responder con los resultados
         console.log('Get Success');
-        event.reply('showTasks', results);
+        event.reply('showTasks', results); // Enviar las tareas recuperadas al proceso de renderizado
       }
+      conn.end(); 
     });
   } catch (error) {
-    // En caso de error al establecer la conexión
     console.error('Connection refused:', error);
+    event.reply('tasks-error', (error as Error).message); // Cast error a Error para acceder a su propiedad 'message'
   }
 });
+
 
 ipcMain.on('addTask', async (event, newTaskJSON) => {
   try {
@@ -98,12 +93,25 @@ ipcMain.on('addTask', async (event, newTaskJSON) => {
     const result = await conn.query('INSERT INTO task SET ?', newTask);
     console.log('Task added.');
 
-    // Envía un mensaje de confirmación al proceso de renderizado
-    event.sender.send('refreshTasks');
+    conn.end(); 
   } catch (error) {
     console.error('Something went wrong in the insert:', error);
   }
 });
+
+ipcMain.on('deleteTask', async (event, idList) => {
+  try {
+    const conn = await getConnection();
+    const sql = 'DELETE FROM task WHERE idTask IN (?)';
+    const result = await conn.query(sql, [idList]);
+    console.log('Task deleted.', result);
+    event.sender.send('deleteTaskSuccess', idList);
+    conn.end(); 
+  } catch (error) {
+    console.error('Something went wrong in the insert:', error);
+  }
+});
+
 
 
 app.whenReady().then(createWindow)

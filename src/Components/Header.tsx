@@ -1,6 +1,6 @@
 // Header.tsx
-import minimizeIcon from '../Assets/minimize.png';
-import closeIcon from '../Assets/close.png';
+import minimizeIcon from '../Assets/minimize2.png';
+import closeIcon from '../Assets/close2.png';
 import '../Styles/Header.css';
 
 

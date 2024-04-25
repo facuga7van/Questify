@@ -1,8 +1,9 @@
-body{
+body {
   background-image: url('./Assets/bg.jpg');
   background-size: 40rem 40rem;
   background-position: center;
   background-repeat: repeat;
+  background-attachment: fixed; /* Fija el fondo en su posición */
   font-family: 'IM Fell DW Pica';
   overflow-y: hidden;
   margin: 0;

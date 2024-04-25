@@ -5,7 +5,7 @@ import divider from '../Assets/divider.png';
 import '../Styles/Form.css';
 
 interface FormProps {
-  onAddTask: (newTask: { TaskName: string, TaskDesc: string }) => void; // Especifica el tipo del prop onAddTask
+  onAddTask: (newTask: {idTask:any, TaskName: string, TaskDesc: string }) => void; // Especifica el tipo del prop onAddTask
 }
 
 
@@ -18,6 +18,7 @@ function Form({ onAddTask }: FormProps) {
     e.preventDefault();
 
     const newTask = {
+      idTask: null,
       TaskName: taskName,
       TaskDesc: taskDesc
     };
