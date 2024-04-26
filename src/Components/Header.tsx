@@ -9,12 +9,10 @@ function Header() {
   const ipcRenderer = (window as any).ipcRenderer;
 
   const minimizeApp = () => {
-    // Lógica para minimizar la ventana
     ipcRenderer.send('minimizeApp');
   };
 
   const closeApp = () => {
-    // Lógica para cerrar la ventana
     ipcRenderer.send('closeApp');
   };
   return (

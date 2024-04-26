@@ -24,8 +24,6 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     ipcRenderer.removeAllListeners(channel);
   },
 
-  // You can expose other APIs you need here.
-  // ...
 });
 
 export type { IpcRendererEvent };

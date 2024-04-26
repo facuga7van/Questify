@@ -1,11 +1,11 @@
 import { app, BrowserWindow, ipcMain} from 'electron'
-import { createRequire } from 'node:module'
+// import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import {getConnection} from '../src/Data/database';
-
-const require = createRequire(import.meta.url)
+// import {getConnection} from '../src/Data/database';
+// import { Task } from '../src/Data/Interfaces/taskTypes'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+import fs from 'fs'
 
 process.env.APP_ROOT = path.join(__dirname, '..')
 
@@ -32,7 +32,6 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.mjs'),
     },
   })
-
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
@@ -66,52 +65,173 @@ ipcMain.on("minimizeApp", () => {
    win?.close();
  });
 
- ipcMain.on('getTasks', async (event: Electron.IpcMainEvent) => {
+
+//  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
+ const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
+
+
+ // Function to read tasks from the JSON file
+ function getTasks() {
+   try {
+     const data = fs.readFileSync(tasksFilePath, 'utf-8');
+     return JSON.parse(data) || []; // Return empty array if file doesn't exist
+   } catch (error) {
+     console.error('Error reading tasks:', error);
+     return [];
+   }
+ }
+ 
+ // Function to save tasks to the JSON file
+ async function saveTasks(tasks: any) {
+   try {
+     const data = JSON.stringify(tasks, null, 2); // Pretty-print for readability
+     fs.writeFileSync(tasksFilePath, data);
+   } catch (error) {
+     console.error('Error saving tasks:', error);
+   }
+ }
+ 
+ // Function to generate a unique ID (consider using a stronger random number generator for production)
+ async function getNextTaskId() {
+  let lastId = 0; // Default to 1 if no tasks exist
   try {
-    const conn = await getConnection();
-    conn.query('SELECT * FROM task', (error: Error | null, results: any[], fields: any) => {
-      if (error) {
-        console.error('Error:', error);
-        event.reply('tasks-error', error.message);
-      } else {
-        console.log('Get Success');
-        event.reply('showTasks', results); // Enviar las tareas recuperadas al proceso de renderizado
-      }
-      conn.end(); 
-    });
+    const tasks = await getTasks();
+
+    // Check if the file is empty
+    if (tasks.length === 0) {
+      // If empty, set lastId to 1
+      lastId = 1;
+    } else {
+      // If not empty, use the existing logic
+      lastId = Math.max(...tasks.map((task: { idTask: any; }) => task.idTask || 0)) || 1;
+    }
   } catch (error) {
-    console.error('Connection refused:', error);
-    event.reply('tasks-error', (error as Error).message); // Cast error a Error para acceder a su propiedad 'message'
+    console.error('Error getting last ID:', error);
   }
-});
+  return lastId + 1;
+}
 
-
-ipcMain.on('addTask', async (event, newTaskJSON) => {
+ 
+ ipcMain.on('getTasks', async (event: Electron.IpcMainEvent) => {
+   try {
+     const tasks = await getTasks();
+     event.reply('showTasks', tasks); // Send tasks to the renderer
+   } catch (error) {
+     console.error('Connection refused:', error);
+     event.reply('tasks-error', (error as Error).message); // Send error message
+   }
+ });
+ 
+ ipcMain.on('addTask', async (event, newTaskJSON) => {
   try {
     const newTask = JSON.parse(newTaskJSON);
-    const conn = await getConnection(); // Supongamos que esta función obtiene la conexión a la base de datos
-    const result = await conn.query('INSERT INTO task SET ?', newTask);
-    console.log('Task added.');
+    const nextId = await getNextTaskId(); // Generate unique ID (optional)
 
-    conn.end(); 
+    const tasks = await getTasks();
+
+    // Check if a task with the same ID already exists
+    const existingTaskIndex = tasks.findIndex((task: { idTask: any; }) => task.idTask === newTask.idTask);
+ 
+    if (existingTaskIndex !== -1 && existingTaskIndex !== null && existingTaskIndex !== undefined) {
+      // Update the existing task
+      tasks[existingTaskIndex] = { ...tasks[existingTaskIndex], ...newTask }; // Merge updated data
+      console.log(`Task with ID ${newTask.idTask} updated.`);
+    } else {
+      // If no existing ID, assign the generated ID (if applicable) and add the new task
+      newTask.idTask = nextId || 1; // Use generated ID or calculate based on length
+      tasks.push(newTask);
+      console.log(`Task with ID ${event} added.`);
+    }
+
+      await saveTasks(tasks); // Pass the updated tasks array
+
+    
+    win?.webContents.send('taskAdded'); // Notify the renderer process (optional)
   } catch (error) {
-    console.error('Something went wrong in the insert:', error);
+    console.error('Error adding task:', error);
   }
 });
 
-ipcMain.on('deleteTask', async (event, idList) => {
+
+
+ async function deleteLineFromJSON(tasksFilePath: fs.PathLike | fs.promises.FileHandle, taskIndex: number) {
   try {
-    const conn = await getConnection();
-    const sql = 'DELETE FROM task WHERE idTask IN (?)';
-    const result = await conn.query(sql, [idList]);
-    console.log('Task deleted.', result);
-    event.sender.send('deleteTaskSuccess', idList);
-    conn.end(); 
+    const data = await fs.promises.readFile(tasksFilePath, 'utf-8');
+    const parsedData = JSON.parse(data);
+
+    // Check if the line number is valid
+    if (taskIndex < 1 || taskIndex > Object.keys(parsedData).length) {
+      throw new Error(`Invalid line number: ${taskIndex}`);
+    }
+
+    // Convert the parsed data into an array of lines
+    const lines = data.split('\n');
+
+    // Remove the specified line from the array
+    lines.splice(taskIndex - 1, 1);
+
+    // Convert the modified line array back into a string
+    const updatedContent = lines.join('\n');
+
+    // Write the updated content to the file
+    await fs.promises.writeFile(tasksFilePath, updatedContent);
   } catch (error) {
-    console.error('Something went wrong in the insert:', error);
+    console.error('Error deleting line from JSON:', error);
+    throw error; // Re-throw the error to allow proper handling
+  }
+}
+
+ ipcMain.on('deleteTask', async (event, id) => {
+  try {
+    const tasks = await getTasks();
+    const filteredTasks = tasks.filter((task: { idTask: null; }) => task.idTask === id || task.idTask === null);
+
+
+    if (filteredTasks.length === tasks.length) {
+      console.log('Task not found for deletion.');
+      event.sender.send('deleteTaskNotFound');
+      return;
+    }
+
+    // Save the filtered tasks (modified approach)
+    await saveTasks(filteredTasks);
+    event.sender.send('deleteTaskSuccess', id);
+
+    // **New: Delete the line from the JSON file based on the task ID**
+    const taskIndex = tasks.findIndex((task: { idTask: any; }) => task.idTask === id);
+    if (taskIndex !== -1) {
+      try {
+        await deleteLineFromJSON(tasksFilePath, taskIndex + 1); // Line numbers start at 1
+        console.log(`Task with ID ${id} deleted from line ${taskIndex + 1} in tasks.json`);
+      } catch (error) {
+        console.error('Error deleting line from JSON:', error);
+        // Handle potential errors during line deletion (e.g., send error message to renderer)
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    event.sender.send('deleteTaskError', (error as Error).message);
   }
 });
 
-
+ 
+ ipcMain.on('editTask', async (event, id) => {
+   try {
+     const tasks = await getTasks();
+     const taskIndex = tasks.findIndex((task: { idTask: any; }) => task.idTask === id);
+    console.log(taskIndex)
+     if (taskIndex === -1) {
+       console.log('Task not found for edit.');
+       event.sender.send('editTaskNotFound');
+       return;
+     }
+ 
+     win?.webContents.send('sendTaskEdit', tasks[taskIndex]); // Send the task object
+   } catch (error) {
+     console.error('Error fetching task for edit:', error);
+     event.sender.send('editTaskError', (error as Error).message);
+   }
+ });
+ 
 
 app.whenReady().then(createWindow)

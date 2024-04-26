@@ -1,63 +1,85 @@
 import React, { useEffect, useState } from 'react';
 import type { IpcRendererEvent } from '../../electron/preload';
 import '../Styles/TaskList.css';
-import { Task, TaskListProps} from '../Data/Interfaces/taskTypes';
+import { Task, TaskListProps } from '../Data/Interfaces/taskTypes';
+import delImg from '../Assets/Trash.png';
+import editImg from '../Assets/edit.png'
 
 function TaskList({ tasksProp }: TaskListProps) {
   const ipcRenderer = (window as any).ipcRenderer;
   const [taskList, setTasks] = useState<Task[]>(tasksProp);
-  const [tasksToDelete, setTasksToDelete] = useState<number[]>([]); 
+  const [tasksToDelete, setTasksToDelete] = useState<number[]>([]);
+  const [getTasks, setGetTasks] = useState(false); 
 
   useEffect(() => {
-    tasksProp = [];
-  },[])
+    setGetTasks(true);
+  }, [])
 
   useEffect(() => {
     const handleShowTasks = (event: IpcRendererEvent, tasks: Task[]) => {
-      const updatedTasks = tasks.concat(tasksProp);
-      setTasks(updatedTasks.reverse());
-      tasksProp = [];
+      setTasks(tasks.reverse());
+      setGetTasks(false);
+      console.log(event)
     };
-    console.log('sexo')
     ipcRenderer.send('getTasks');
     ipcRenderer.on('showTasks', handleShowTasks);
+    
     return () => {
       ipcRenderer.removeAllListeners('showTasks', handleShowTasks);
     };
-  }, [tasksProp]);
+  }, [getTasks]);
 
   const handleDeleteBtnClick = () => {
-    ipcRenderer.send('deleteTask', tasksToDelete);
+    if (tasksToDelete.length > 0) {
+      ipcRenderer.send('deleteTask', tasksToDelete);
+    }
+
+  };
+  
+  const handleEditTask = (event: IpcRendererEvent) => {
+    setGetTasks(true)
+    console.log(event)
+    ipcRenderer.removeAllListeners('taskAdded');
   };
 
+  ipcRenderer.on('taskAdded', handleEditTask);
+  
   useEffect(() => {
     const handleResize = () => {
       const container = document.getElementById('taskList');
-      if (container) { 
+      if (container) {
         const windowHeight = window.innerHeight;
         const minHeight = 0.01 * windowHeight;
         const maxHeight = 0.50 * windowHeight;
-  
+
         const containerHeight = minHeight + (maxHeight - minHeight) * (windowHeight / screen.height);
-  
+
         container.style.height = containerHeight + 'px';
       }
     };
-  
+
     window.addEventListener('resize', handleResize);
     handleResize();
-  
+
     return () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
 
   const handleCheckDeleteChange = async (event: React.ChangeEvent<HTMLInputElement>, task: Task) => {
-    const taskId = task.idTask || 0; 
+    const taskId = task.idTask || 0;
     if (event.target.checked) {
       await setTasksToDelete([...tasksToDelete, taskId]);
     } else {
-      await setTasksToDelete(tasksToDelete.filter(id => id !== taskId)); 
+      await setTasksToDelete(tasksToDelete.filter(id => id !== taskId));
+    }
+  };
+  const handleEditBtnClick = async (task: Task) => {
+    try {
+      await ipcRenderer.send('editTask', task.idTask); // Await the promise for synchronous behavior
+      console.log('Task edit request sent successfully'); // Optional success message
+    } catch (error) {
+      console.error('Error sending edit request:', error); // Handle errors gracefully
     }
   };
 
@@ -65,54 +87,73 @@ function TaskList({ tasksProp }: TaskListProps) {
     const handleDeleteTaskSuccess = (event: IpcRendererEvent, deletedIds: number[]) => {
       const updatedTaskList = taskList.filter(task => !deletedIds.includes(task.idTask || 0));
       setTasks(updatedTaskList);
-      setTasksToDelete([]); 
+      console.log(event)
+      setTasksToDelete([]);
     };
-
+    
     ipcRenderer.on('deleteTaskSuccess', handleDeleteTaskSuccess);
 
     return () => {
       ipcRenderer.removeAllListeners('deleteTaskSuccess', handleDeleteTaskSuccess);
     };
-  }, [taskList]); 
+  }, [taskList]);
 
   return (
     <div>
-    {tasksToDelete.length > 0 && ( 
-      <div className="w-full flex justify-end items-center mx-auto space-y-2 max-w-lg">
-        <button className="DeleteBtn" onClick={handleDeleteBtnClick}>DeleteBtn</button>
-      </div>
-    )}
 
-    <div id="taskList" className="w-full items-center mx-auto space-y-2 max-w-lg">
-       
-      {taskList
-        .filter(task => task.idTask !== undefined) 
-        .map((task, index) => (
-          <div className="taskContainer" key={index}>
-            <div className="taskImgCont">
-            <label className="checkbox-label">
-            <input type="checkbox" className="checkFinish" />
-              <div className="taskImage"></div>
-              </label>
+      <div className="w-full flex justify-end items-center mx-auto space-y-2 max-w-lg">
+        <div className='DeleteBtn'>
+          <img
+            src={delImg}
+            className={
+              tasksToDelete.length > 0
+                ? "DeleteOn"
+                : "DeleteOff"
+            }
+            onClick={handleDeleteBtnClick}
+          />
+        </div>
+      </div>
+
+      <div id="taskList" className="w-full items-center mx-auto space-y-2 max-w-lg">
+
+        {taskList
+          .filter(task => task.idTask !== undefined)
+          .map((task, index) => (
+            <div className="taskContainer" key={index}>
+              <div className="taskImgCont">
+                <label className="imgBtn">
+                  <input type="checkbox" className="checkFinish" />
+                  <div className="taskImage"></div>
+                </label>
+              </div>
+              <div className="taskContent">
+                <h1 className="taskName">{task.TaskName}</h1>
+                <div className="taskDesc"><h3>{task.TaskDesc}</h3></div>
+              </div>
+              <div className='taskControls'>
+                <div className='taskCheckCont'>
+                  <img
+                    src={editImg}
+                    className='imgBtn editBtn'
+                    onClick={() => handleEditBtnClick(task)}
+                  />
+                </div>
+                <div className="taskCheckCont">
+                  <label className="imgBtn">
+                    <input
+                      type="checkbox"
+                      className="checkDelete"
+                      onChange={(event) => handleCheckDeleteChange(event, task)}
+                      checked={tasksToDelete.includes(task.idTask || 0)}
+                    />
+                    <div className="taskCheck"></div>
+                  </label>
+                </div>
+              </div>
             </div>
-            <div className="taskContent">
-              <h1 className="taskName">{task.TaskName}</h1>
-              <h3 className="taskDesc">{task.TaskDesc}</h3>
-            </div>
-            <div className="taskCheckCont">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  className="checkDelete"
-                  onChange={(event) => handleCheckDeleteChange(event, task)}
-                  checked={tasksToDelete.includes(task.idTask || 0)} 
-                />
-                <div className="taskCheck"></div>
-              </label>
-            </div>
-          </div>
-        ))}
-    </div>
+          ))}
+      </div>
     </div>
   );
 }
