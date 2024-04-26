@@ -18,3 +18,4 @@ Está desarrollada utilizando Electron, Vite, React y almacenamiento JSON.
 
 ¡Se aceptan sugerencias e ideas para seguir mejorando!
 
+[Download Latest Release]https://github.com/facuga7van/Questify/releases/latest/raw/master/
