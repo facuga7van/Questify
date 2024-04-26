@@ -1,0 +1,22 @@
+.custom-footer {
+  position: absolute; /* Position the footer absolutely */
+  bottom: 0; /* Set the bottom position to 0 */
+  left: 0; /* Set the left position to 0 */
+  width: 100%; /* Make the footer span the entire width */
+  display: flex;
+  align-items: center;
+  user-select: none;
+  background-image: url('../Assets/footer.png');
+  background-position: bottom;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  height: 6rem;
+}
+.footerWarning{
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+  text-align: center;
+  line-height: 1rem;
+  max-width: 5rem;
+}

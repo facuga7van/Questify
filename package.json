@@ -1,8 +1,8 @@
 {
   "name": "questify",
-  "private": true,
-  "description": "aaa",
-  "version": "0.0.0",
+  "private": false,
+  "description": "Quest book for your daily tasks",
+  "version": "0.0.6",
   "type": "module",
   "scripts": {
     "start": "electron .",
@@ -10,6 +10,11 @@
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
+  },
+  "repository": "https://github.com/facuga7van/Questify",
+  "publish": {
+    "provider": "github",
+    "releaseType": "release"
   },
   "dependencies": {
     "autoprefixer": "^10.4.19",
@@ -30,6 +35,8 @@
     "@vitejs/plugin-react": "^4.2.1",
     "electron": "^30.0.1",
     "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2",
+    "electron-updater": "^6.1.8",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",

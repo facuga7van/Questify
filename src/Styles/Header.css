@@ -41,12 +41,13 @@
   .btnBox button img {
     width: 100%; /* Ajustar el tamaño de la imagen al 100% del botón */
     height: auto; /* Permitir que la altura de la imagen se ajuste automáticamente */
-    transition: filter 0.3s ease;
-  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0));
+    transition: all 0.3s ease;
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
   }
   
   .btnBox button:hover img {
-    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 1));
   }
   
   .draggable {

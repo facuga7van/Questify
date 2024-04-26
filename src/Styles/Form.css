@@ -41,6 +41,7 @@
     transition: all 0.3s ease;
   }
   .dividerImg{
+    user-select: none;
     width: 30rem;
   }
   .rpgBtn:hover {

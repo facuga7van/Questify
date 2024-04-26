@@ -5,41 +5,43 @@ import type { IpcRendererEvent } from '../../electron/preload';
 import divider from '../Assets/divider.png';
 import '../Styles/Form.css';
 import { Task } from '../Data/Interfaces/taskTypes';
-interface FormProps {
-  onAddTask: (newTask: {idTask:any, TaskName: string, TaskDesc: string }) => void; // Especifica el tipo del prop onAddTask
-}
 
-
-function Form({ onAddTask }: FormProps) {
+function Form() {
   const ipcRenderer = (window as any).ipcRenderer;
   const [taskName, setTaskName] = useState('');
   const [taskDesc, setTaskDesc] = useState('');
   const [idTask, setidTask] = useState('');
-
+  const [isEdit, setIsEdit] = useState(false); 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const newTask = {
       idTask: idTask, 
       TaskName: taskName,
-      TaskDesc: taskDesc
+      TaskDesc: taskDesc,
+      TaskStatus: false,
     };
 
     if (newTask.TaskName !== '') {
       console.log('se agrega')
       ipcRenderer.send('addTask', JSON.stringify(newTask));
-      onAddTask(newTask); // Llamamos a la función para agregar la tarea
       setTaskName('');
       setTaskDesc('');
+      setidTask('');
+      setIsEdit(false);
     }
   };
-  
+
+
   const handleEditTask = (event: IpcRendererEvent,task: Task) => {
     setTaskName(task.TaskName || ''); // Set empty string if TaskName is missing
     setTaskDesc(task.TaskDesc || ''); // Set empty string if TaskDesc is missing
     setidTask(task.idTask);
-    console.log(event)
+    if (1<2){
+      console.log(event)
+    }
     ipcRenderer.removeAllListeners('sendTaskEdit');
+    setIsEdit(true);
   };
 
   ipcRenderer.on('sendTaskEdit', handleEditTask);
@@ -60,7 +62,7 @@ function Form({ onAddTask }: FormProps) {
               value={taskName} // Directly assign value from state
               onChange={(e) => setTaskName(e.target.value)}
               className="w-full px-4 py-2 rounded-md focus:outline-none"
-              placeholder="Add a new task..."
+              placeholder="Add a new quest..."
               autoFocus
             />
           </div>
@@ -70,10 +72,12 @@ function Form({ onAddTask }: FormProps) {
               value={taskDesc} // Directly assign value from state
               onChange={(e) => setTaskDesc(e.target.value)}
               className="w-full px-4 py-2 rounded-md focus:outline-none"
-              placeholder="Description"
+              placeholder="Quest description"
             />
           </div>
-          <button type="submit" className="rpgBtn w-full">Add Task</button>
+          <button type="submit" className="rpgBtn w-full">
+            {isEdit ? 'Edit Quest' : 'Add Quest'}
+          </button>
         </form>
       </div>
       <img src={divider} className="dividerImg" alt="Divider"></img>

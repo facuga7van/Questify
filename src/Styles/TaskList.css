@@ -37,7 +37,17 @@
   border-bottom: 2px solid rgba(0, 0, 0, 0.25);
 
 }
-
+.taskContainerFinished {
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
+  margin: 0 1rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+  opacity: 0.4;
+}
+.taskContainerFinished .taskName{
+  text-decoration:line-through;
+}
 .taskContent {
   max-width: 75%;
   display: flex;
@@ -79,6 +89,7 @@
   margin-left: 1rem;
   /* Add some margin from content */
   margin-right: 0px;
+  user-select: none;
 }
 
 .imgBtn {
@@ -174,7 +185,7 @@
 
 .DeleteBtn {
   width: 2rem;
-
+  user-select: none;
   margin: 5px 25px 5px 5px;
   display: flex;
   align-items: center;

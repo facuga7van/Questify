@@ -2,6 +2,7 @@ export interface Task {
     idTask: any;
     TaskName: string;
     TaskDesc: string;
+    TaskStatus: any;
   }
 
   export interface TaskListProps {

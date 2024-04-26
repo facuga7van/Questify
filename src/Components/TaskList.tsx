@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import type { IpcRendererEvent } from '../../electron/preload';
 import '../Styles/TaskList.css';
-import { Task, TaskListProps } from '../Data/Interfaces/taskTypes';
+import { Task } from '../Data/Interfaces/taskTypes';
 import delImg from '../Assets/Trash.png';
 import editImg from '../Assets/edit.png'
 
-function TaskList({ tasksProp }: TaskListProps) {
+function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
-  const [taskList, setTasks] = useState<Task[]>(tasksProp);
+  const [taskList, setTasks] = useState<Task[]>([]);
   const [tasksToDelete, setTasksToDelete] = useState<number[]>([]);
   const [getTasks, setGetTasks] = useState(false); 
 
@@ -33,16 +33,8 @@ function TaskList({ tasksProp }: TaskListProps) {
     if (tasksToDelete.length > 0) {
       ipcRenderer.send('deleteTask', tasksToDelete);
     }
-
   };
   
-  const handleEditTask = (event: IpcRendererEvent) => {
-    setGetTasks(true)
-    console.log(event)
-    ipcRenderer.removeAllListeners('taskAdded');
-  };
-
-  ipcRenderer.on('taskAdded', handleEditTask);
   
   useEffect(() => {
     const handleResize = () => {
@@ -82,12 +74,31 @@ function TaskList({ tasksProp }: TaskListProps) {
       console.error('Error sending edit request:', error); // Handle errors gracefully
     }
   };
+  const handleCompleteBtnClick = async (task: Task) => {
+    try {
+      await ipcRenderer.send('changeStatusTask', task.idTask); // Await the promise for synchronous behavior
+      console.log('Task edit request sent successfully'); // Optional success message
+    } catch (error) {
+      console.error('Error sending edit request:', error); // Handle errors gracefully
+    }
+  };
+  const handleEditTask = (event: IpcRendererEvent) => {
+    setGetTasks(true)
+    if (1<2){
+      console.log(event)
+    }
+    ipcRenderer.removeAllListeners('taskAdded');
+  };
 
+  ipcRenderer.on('taskAdded', handleEditTask);
   useEffect(() => {
     const handleDeleteTaskSuccess = (event: IpcRendererEvent, deletedIds: number[]) => {
       const updatedTaskList = taskList.filter(task => !deletedIds.includes(task.idTask || 0));
       setTasks(updatedTaskList);
-      console.log(event)
+      if (1<2){
+        console.log(event)
+      }
+      
       setTasksToDelete([]);
     };
     
@@ -118,12 +129,12 @@ function TaskList({ tasksProp }: TaskListProps) {
       <div id="taskList" className="w-full items-center mx-auto space-y-2 max-w-lg">
 
         {taskList
-          .filter(task => task.idTask !== undefined)
+          .filter(task => task.idTask !== undefined && !task.TaskStatus)
           .map((task, index) => (
             <div className="taskContainer" key={index}>
               <div className="taskImgCont">
                 <label className="imgBtn">
-                  <input type="checkbox" className="checkFinish" />
+                  <input type="checkbox" className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
                   <div className="taskImage"></div>
                 </label>
               </div>
@@ -151,6 +162,23 @@ function TaskList({ tasksProp }: TaskListProps) {
                   </label>
                 </div>
               </div>
+            </div>
+          ))}
+          {taskList
+          .filter(task => task.idTask !== undefined && task.TaskStatus)
+          .map((task, index) => (
+            <div className="taskContainerFinished" key={index}>
+              <div className="taskImgCont">
+                <label className="imgBtn">
+                  <input type="checkbox" className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
+                  <div className="taskImage"></div>
+                </label>
+              </div>
+              <div className="taskContent">
+                <h1 className="taskName">{task.TaskName}</h1>
+                <div className="taskDesc"><h3>{task.TaskDesc}</h3></div>
+              </div>
+              
             </div>
           ))}
       </div>

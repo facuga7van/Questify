@@ -1,7 +1,10 @@
 import { ipcRenderer, contextBridge } from 'electron';
 
 type IpcRendererEvent = import('electron').IpcRendererEvent;
-
+ipcRenderer.removeAllListeners('deleteTaskSuccess');
+ipcRenderer.removeAllListeners('sendTaskEdit');
+ipcRenderer.removeAllListeners('showTasks');
+ipcRenderer.removeAllListeners('askAdded');
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
   on(...args: Parameters<typeof ipcRenderer.on>) {
@@ -23,6 +26,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   removeAllListeners(channel: string) {
     ipcRenderer.removeAllListeners(channel);
   },
+
 
 });
 
