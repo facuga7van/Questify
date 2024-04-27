@@ -7,8 +7,9 @@ Está desarrollada utilizando Electron, Vite, React y almacenamiento JSON.
 **Features**
 - Agregar misiones
 - Editar misiones
-- Contemplar misiones
+- Completar misiones
 - Eliminar misiones
+- App en segundo plano
 
 **Funcionalidades futuras:**
 
