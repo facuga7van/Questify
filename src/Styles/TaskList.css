@@ -1,29 +1,21 @@
 #taskList {
   max-height: 60vh;
-  /* Ajusta según el tamaño deseado del encabezado */
   min-height: 25vh;
-  /* Altura mínima deseada */
   overflow-y: auto;
-  /* Agrega barra de desplazamiento vertical si es necesario */
   background-color: rgba(0, 0, 0, 0.15);
   border-radius: 10px;
-  /* Borde redondeado */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
-  /* Sombra difuminada */
 }
 
-/* Agrega una imagen como fondo de la pista de la barra de desplazamiento */
 #taskList::-webkit-scrollbar {
   background-color: rgba(0, 0, 0, 0);
   width: 5px;
   margin-right: 2px;
 }
 
-/* Define la apariencia de la manija de la barra de desplazamiento */
 #taskList::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.3);
   border-radius: 10px;
-
 }
 
 /* Tarea */
@@ -31,7 +23,6 @@
 .taskContainer {
   display: flex;
   align-items: center;
-  /* Align vertically */
   min-height: 2rem;
   margin: 0 1rem;
   border-bottom: 2px solid rgba(0, 0, 0, 0.25);
@@ -66,7 +57,6 @@
 
 .taskDesc {
   max-width: 90%;
-  
   overflow-wrap: break-word;
   font-family: 'Crimson Pro';
   opacity: 0.85;
@@ -83,11 +73,8 @@
 /* Imagenes */
 .taskControls {
   display: flex;
-  /* Wrap edit/delete buttons */
   justify-content: end;
-  /* Align buttons to the right */
   margin-left: 1rem;
-  /* Add some margin from content */
   margin-right: 0px;
   user-select: none;
 }
@@ -136,14 +123,10 @@
 .taskImage,
 .taskCheck {
   width: 1rem;
-  /* Ancho deseado */
   height: 1rem;
-  /* Altura deseada */
   background-size: contain;
-  /* Para ajustar la imagen al tamaño del contenedor */
   background-repeat: no-repeat;
   background-position: center center;
-  /* Centra la imagen horizontal y verticalmente */
 }
 
 .checkFinish.checked {
@@ -152,21 +135,15 @@
 
 .taskCheck.checked {
   background-image: url("../Assets/Checked.png");
-  /* Cambiar la imagen cuando está marcado */
 }
 
 .taskImgCont,
 .taskCheckCont {
   width: 2rem;
-  /* Ancho deseado */
   height: 2.5rem;
-  /* Altura deseada */
   display: flex;
-  /* Utiliza flexbox para centrar la imagen */
   justify-content: center;
-  /* Centra horizontalmente */
   align-items: center;
-  /* Centra verticalmente */
 }
 
 .taskImgCont:hover {
@@ -175,12 +152,11 @@
 
 .taskImgCont:hover .taskImage {
   background-image: url("../Assets/QuestHover.png");
-  /* Cambiar la imagen en hover */
+  /* Cambiar la  en hover */
 }
 
 .taskCheckCont:hover .taskCheck {
   background-image: url("../Assets/Checked.png");
-  /* Cambiar la imagen en hover */
 }
 
 .DeleteBtn {

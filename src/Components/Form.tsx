@@ -12,9 +12,10 @@ function Form() {
   const [taskDesc, setTaskDesc] = useState('');
   const [idTask, setidTask] = useState('');
   const [isEdit, setIsEdit] = useState(false); 
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    
     const newTask = {
       idTask: idTask, 
       TaskName: taskName,
@@ -28,7 +29,13 @@ function Form() {
       setTaskName('');
       setTaskDesc('');
       setidTask('');
+      const taskInput = document.getElementById('taskInput');
+      taskInput?.classList.remove('needed'); // Add the class conditionally
       setIsEdit(false);
+    }else{
+      const taskInput = document.getElementById('taskInput');
+      taskInput?.classList.add('needed'); // Add the class conditionally
+
     }
   };
 
@@ -60,8 +67,16 @@ function Form() {
               type="text"
               id="taskInput"
               value={taskName} // Directly assign value from state
-              onChange={(e) => setTaskName(e.target.value)}
-              className="w-full px-4 py-2 rounded-md focus:outline-none"
+              onChange={(e) => {
+                setTaskName(e.target.value);
+      
+                // Remove the "needed" class if the input is not empty
+                if (taskName !== '') {
+                  const taskInput = document.getElementById('taskInput');
+                  taskInput?.classList.remove('needed');
+                }
+              }}
+              className={`w-full px-4 py-2 rounded-md focus:outline-none`}
               placeholder="Add a new quest..."
               autoFocus
             />
