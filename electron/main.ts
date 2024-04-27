@@ -1,9 +1,10 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Tray, nativeImage, Menu } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'fs'
 import { autoUpdater } from 'electron-updater'
 
+// import appIcon from '../resources/icon.ico'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 
@@ -16,6 +17,7 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
+// const appIcon = ;
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
@@ -64,11 +66,11 @@ ipcMain.on("minimizeApp", () => {
   win?.minimize();
 });
 ipcMain.on("closeApp", () => {
-  win?.close();
+  win?.hide();
 });
 
 
-  // const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
+  //  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
   const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
 
 
@@ -87,7 +89,6 @@ function getTasks() {
 async function saveTasks(tasks: any) {
   try {
     const data = JSON.stringify(tasks, null, 2); // Pretty-print for readability
-    console.log('Guardado en ', tasksFilePath)
     fs.writeFileSync(tasksFilePath, data);
   } catch (error) {
     console.error('Error saving tasks:', error);
@@ -254,11 +255,11 @@ autoUpdater.on("update-available", (info) =>{
   win?.webContents.send('checkingUdp', pth)
 })
 autoUpdater.on("update-not-available", (info) =>{
-  win?.webContents.send('checkingUdp', 'Update not available')
+  win?.webContents.send('checkingUdp', '')
     console.log('not',info)
 })
 autoUpdater.on("update-downloaded", (info) =>{
-  win?.webContents.send('checkingUdp', 'Updated')
+  win?.webContents.send('checkingUdp', 'Installing...')
     console.log('checking',info)
 })
 autoUpdater.on('error', (error) => {
@@ -270,9 +271,23 @@ app.whenReady().then(() => {
   autoUpdater.checkForUpdatesAndNotify();
 
   win?.webContents.on('did-finish-load', () => {
+    
     // Check if win is not null before accessing its properties
     if (win) {
+      let tray: Tray;
       win.webContents.send('checkingUdp', 'Checking for updates');
+      tray = new Tray(nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, '../src/Assets/icon.png')))
+      tray.setToolTip('Questify')
+      tray.on('double-click',()=>{
+        win?.isVisible() ? win?.hide() : win?.show();
+      })
+      let template = [{label:'exit',
+        click: async () => {
+          win?.close(); 
+        }
+      }];
+      let contextMenu = Menu.buildFromTemplate(template);
+      tray.setContextMenu(contextMenu);
     } else {
       console.error('Window not yet created. Unable to send message.');
     }

@@ -1,6 +1,5 @@
 .custom-titlebar {
     display: flex;
-
     user-select: none;
     background-image: url('../Assets/header.png'); 
     background-position: top;
