@@ -1,12 +1,10 @@
-import { app, BrowserWindow, ipcMain, Tray, nativeImage, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'fs'
 import { autoUpdater } from 'electron-updater'
-
 // import appIcon from '../resources/icon.ico'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
 
 process.env.APP_ROOT = path.join(__dirname, '..')
 
@@ -20,6 +18,7 @@ autoUpdater.autoInstallOnAppQuit = true
 // const appIcon = ;
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
+const iconPath = path.join(process.env.VITE_PUBLIC, 'icon.png');
 
 let win: BrowserWindow | null
 
@@ -70,8 +69,8 @@ ipcMain.on("closeApp", () => {
 });
 
 
-  //  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
-  const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
+  // const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
+   const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
 
 
 // Function to read tasks from the JSON file
@@ -274,9 +273,15 @@ app.whenReady().then(() => {
     
     // Check if win is not null before accessing its properties
     if (win) {
-      let tray: Tray;
       win.webContents.send('checkingUdp', 'Checking for updates');
-      tray = new Tray(nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, '../src/Assets/icon.png')))
+      
+      
+
+      
+    const tray = new Tray(nativeImage.createFromPath(iconPath));
+      tray.setImage(iconPath);
+
+      
       tray.setToolTip('Questify')
       tray.on('double-click',()=>{
         win?.isVisible() ? win?.hide() : win?.show();

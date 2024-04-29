@@ -2,7 +2,7 @@
   "name": "questify",
   "private": false,
   "description": "Quest book for your daily tasks",
-  "version": "0.0.7",
+  "version": "0.0.10",
   "type": "module",
   "scripts": {
     "start": "electron .",

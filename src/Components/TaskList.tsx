@@ -4,12 +4,14 @@ import '../Styles/TaskList.css';
 import { Task } from '../Data/Interfaces/taskTypes';
 import delImg from '../Assets/Trash.png';
 import editImg from '../Assets/edit.png'
+import divider from '../Assets/divider2.png';
 
 function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
   const [taskList, setTasks] = useState<Task[]>([]);
   const [tasksToDelete, setTasksToDelete] = useState<number[]>([]);
-  const [getTasks, setGetTasks] = useState(false); 
+  const [getTasks, setGetTasks] = useState(false);
+  const hasConfirmedTasks = taskList.some(task => task.idTask !== undefined && task.TaskStatus);
 
   useEffect(() => {
     setGetTasks(true);
@@ -23,7 +25,7 @@ function TaskList() {
     };
     ipcRenderer.send('getTasks');
     ipcRenderer.on('showTasks', handleShowTasks);
-    
+
     return () => {
       ipcRenderer.removeAllListeners('showTasks', handleShowTasks);
     };
@@ -34,8 +36,8 @@ function TaskList() {
       ipcRenderer.send('deleteTask', tasksToDelete);
     }
   };
-  
-  
+
+
   useEffect(() => {
     const handleResize = () => {
       const container = document.getElementById('taskList');
@@ -66,6 +68,7 @@ function TaskList() {
       await setTasksToDelete(tasksToDelete.filter(id => id !== taskId));
     }
   };
+
   const handleEditBtnClick = async (task: Task) => {
     try {
       await ipcRenderer.send('editTask', task.idTask); // Await the promise for synchronous behavior
@@ -74,34 +77,38 @@ function TaskList() {
       console.error('Error sending edit request:', error); // Handle errors gracefully
     }
   };
+
   const handleCompleteBtnClick = async (task: Task) => {
     try {
+      await setTasksToDelete(tasksToDelete.filter(id => id !== task.idTask));
       await ipcRenderer.send('changeStatusTask', task.idTask); // Await the promise for synchronous behavior
       console.log('Task edit request sent successfully'); // Optional success message
     } catch (error) {
       console.error('Error sending edit request:', error); // Handle errors gracefully
     }
   };
+
   const handleEditTask = (event: IpcRendererEvent) => {
     setGetTasks(true)
-    if (1<2){
+    if (1 < 2) {
       console.log(event)
     }
     ipcRenderer.removeAllListeners('taskAdded');
   };
 
   ipcRenderer.on('taskAdded', handleEditTask);
+
   useEffect(() => {
     const handleDeleteTaskSuccess = (event: IpcRendererEvent, deletedIds: number[]) => {
       const updatedTaskList = taskList.filter(task => !deletedIds.includes(task.idTask || 0));
       setTasks(updatedTaskList);
-      if (1<2){
+      if (1 < 2) {
         console.log(event)
       }
-      
+
       setTasksToDelete([]);
     };
-    
+
     ipcRenderer.on('deleteTaskSuccess', handleDeleteTaskSuccess);
 
     return () => {
@@ -134,7 +141,7 @@ function TaskList() {
             <div className="taskContainer" key={index}>
               <div className="taskImgCont">
                 <label className="imgBtn">
-                  <input type="checkbox" className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
+                  <input type="checkbox" checked={false} className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
                   <div className="taskImage"></div>
                 </label>
               </div>
@@ -164,13 +171,14 @@ function TaskList() {
               </div>
             </div>
           ))}
-          {taskList
+        {hasConfirmedTasks && <div className='divider'><img src={divider} className="dividerImg" alt="Divider"></img></div>}
+        {taskList
           .filter(task => task.idTask !== undefined && task.TaskStatus)
           .map((task, index) => (
             <div className="taskContainerFinished" key={index}>
               <div className="taskImgCont">
                 <label className="imgBtn">
-                  <input type="checkbox" className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
+                  <input type="checkbox" checked={true} className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
                   <div className="taskImage"></div>
                 </label>
               </div>
@@ -178,7 +186,6 @@ function TaskList() {
                 <h1 className="taskName">{task.TaskName}</h1>
                 <div className="taskDesc"><h3>{task.TaskDesc}</h3></div>
               </div>
-              
             </div>
           ))}
       </div>

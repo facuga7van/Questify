@@ -152,7 +152,6 @@
 
 .taskImgCont:hover .taskImage {
   background-image: url("../Assets/QuestHover.png");
-  /* Cambiar la  en hover */
 }
 
 .taskCheckCont:hover .taskCheck {
@@ -179,4 +178,12 @@
   opacity: 30%;
   width: 1.2rem;
   transition: all 0.2s ease-in-out;
+}
+
+
+.divider img{
+  width: 100%;
+  overflow: hidden;
+  opacity: 0.5;
+  
 }
