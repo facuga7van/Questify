@@ -1,6 +1,6 @@
 ***Questify*** <br>
 Es una aplicación de lista de tareas con un diseño inspirado en los juegos de rol medievales (Skyrim principalmente). 
-Está desarrollada utilizando Electron, Vite, React y almacenamiento JSON.
+Está desarrollada utilizando Electron, Vite, React y almacenamiento local en JSON.
 
 ![image](https://github.com/facuga7van/Questify/assets/70443572/cb93f654-2adc-4611-901b-fc50170a0b7a)
 
