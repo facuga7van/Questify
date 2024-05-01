@@ -1,0 +1,25 @@
+.progressbar{
+    position: absolute;
+    bottom: 0;
+    /* Add some margin from the bottom for spacing */
+    margin-bottom: 0px;
+	width: 100%;
+	height: 0.5rem;
+	border-radius: 5px;
+	background-color: rgba(0, 0, 0, 0.3);
+}
+.xpBar{
+    height: 100%;
+    background-color: rgba(3, 250, 36, 0.8);
+}
+.progressPercent{
+	font-weight: 600;
+    font-size: 2rem;
+    font-family: 'Crimson Pro';
+	position: absolute;
+	left: 50%;
+	bottom: -1.5rem;
+	transform: translate(-50%,-50%);
+	color: #ffe8f7;
+	text-shadow: -1px 0 #555, 0 1px #555, 1px 0 #555, 0 -1px #555;
+}

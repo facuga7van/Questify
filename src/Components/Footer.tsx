@@ -1,7 +1,7 @@
 import '../Styles/Footer.css';
 import type { IpcRendererEvent } from '../../electron/preload';
 import { useEffect } from 'react';
-
+import Progressbar from './ProgressBar';
 
 function Footer() {
   const ipcRenderer = (window as any).ipcRenderer;
@@ -27,8 +27,9 @@ function Footer() {
   
  
   return (
+    
     <div className="custom-footer">
-      <div className="footerWarning"></div>
+      <Progressbar/>
     </div>
   );
 }

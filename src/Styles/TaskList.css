@@ -19,6 +19,20 @@
 }
 
 /* Tarea */
+.taskNameCont{
+  display: flex;
+}
+
+.taskNameCont h3 {
+  user-select: none;
+  font-style: italic;
+  opacity: 0.8;
+  color: rgba(12, 141, 0, 0.808);
+  text-shadow: 
+    0 0 5px rgba(183, 2, 255, 0.2), /* Inner white glow */
+    0 0 5px rgba(0, 255, 0, 0.9); /* Green outer glow */
+}
+
 
 .taskContainer {
   display: flex;
@@ -26,8 +40,8 @@
   min-height: 2rem;
   margin: 0 1rem;
   border-bottom: 2px solid rgba(0, 0, 0, 0.25);
-
 }
+
 .taskContainerFinished {
   display: flex;
   align-items: center;
@@ -49,7 +63,7 @@
 }
 
 .taskName {
-  max-width: 100%;
+  max-width: 87%;
   overflow: hidden;
   font-size: 1.5rem;
   text-overflow: ellipsis;
