@@ -15,9 +15,7 @@ export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
-// const openai = new OpenAI({
-//   apiKey: process.env['OPENAI_API_KEY'] = 'sk-proj-l8wxY8W1XvrlJKBeoWgiT3BlbkFJJEsxnDeSwVAToZ4VgVPi', 
-// });
+
 
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
