@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { IpcRendererEvent } from '../../electron/preload';
 import '../Styles/TaskList.css';
 import { Task } from '../Data/Interfaces/taskTypes';
@@ -12,20 +12,26 @@ function TaskList() {
   const [tasksToDelete, setTasksToDelete] = useState<number[]>([]);
   const [getTasks, setGetTasks] = useState(false);
   const hasConfirmedTasks = taskList.some(task => task.idTask !== undefined && task.TaskStatus);
-
+  const [getXp, setGetXp] = useState(false);
   useEffect(() => {
     setGetTasks(true);
   }, [])
-
+  useEffect(() => {
+    setGetXp(true);
+  }, []);
   useEffect(() => {
     const handleShowTasks = (event: IpcRendererEvent, tasks: Task[]) => {
       setTasks(tasks.reverse());
       setGetTasks(false);
-      console.log(event)
+      if (1 > 2) {
+        console.log(event)
+      }
     };
     ipcRenderer.send('getTasks');
     ipcRenderer.on('showTasks', handleShowTasks);
-
+    if (1>2){
+      console.log(getXp)
+    }
     return () => {
       ipcRenderer.removeAllListeners('showTasks', handleShowTasks);
     };
@@ -98,6 +104,35 @@ function TaskList() {
 
   ipcRenderer.on('taskAdded', handleEditTask);
 
+  const [xpGained, setXpGained] = useState(0); // State variable to hold experience gain
+  const expAlertRef = useRef<HTMLDivElement>(null);
+
+
+  useEffect(() => {
+    const handleXPChange = (event: IpcRendererEvent, newXpGained: number) => {
+      if (newXpGained > 0) {
+        setXpGained(newXpGained);
+        setGetXp(false);
+      } else {
+        setXpGained(0);
+        setGetXp(false);
+      }
+      if (1>2){
+        console.log(event)
+      }
+      ipcRenderer.removeAllListeners('changeXP', handleXPChange);
+    };
+
+    ipcRenderer.on('changeXP', handleXPChange); // Assuming 'taskAdded' sends XP gain
+
+    // Get the expAlert element on component mount
+    const expAlertElement = document.getElementById('expAlert');
+    if (expAlertElement && expAlertRef.current) {
+      expAlertRef.current.textContent = `+${xpGained}xp`;
+
+    }
+  });
+
   useEffect(() => {
     const handleDeleteTaskSuccess = (event: IpcRendererEvent, deletedIds: number[]) => {
       const updatedTaskList = taskList.filter(task => !deletedIds.includes(task.idTask || 0));
@@ -120,6 +155,7 @@ function TaskList() {
     <div>
 
       <div className="w-full flex justify-end items-center mx-auto space-y-2 max-w-lg">
+
         <div className='DeleteBtn'>
           <img
             src={delImg}
@@ -146,7 +182,7 @@ function TaskList() {
                 </label>
               </div>
               <div className="taskContent">
-                <h1 className="taskName">{task.TaskName}</h1>
+                <span className="taskNameCont"><h1 className="taskName">{task.TaskName}</h1><h3>+{7 * task.TaskDiff} xp</h3></span>
                 <div className="taskDesc"><h3>{task.TaskDesc}</h3></div>
               </div>
               <div className='taskControls'>

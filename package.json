@@ -2,7 +2,8 @@
   "name": "questify",
   "private": false,
   "description": "Quest book for your daily tasks",
-  "version": "0.0.10",
+  "author": "Facundo Galvan",
+  "version": "0.0.11",
   "type": "module",
   "scripts": {
     "start": "electron .",
@@ -19,6 +20,7 @@
   "dependencies": {
     "autoprefixer": "^10.4.19",
     "mysql": "^2.18.1",
+    "openai": "^4.39.1",
     "postcss": "^8.4.38",
     "promise-mysql": "^5.2.0",
     "react": "^18.2.0",

@@ -3,19 +3,24 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'fs'
 import { autoUpdater } from 'electron-updater'
-// import appIcon from '../resources/icon.ico'
+// import OpenAI from "openai";
+import {Task} from '../src/Data/Interfaces/taskTypes';
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-process.env.APP_ROOT = path.join(__dirname, '..')
 
+
+process.env.APP_ROOT = path.join(__dirname, '..')
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
+// const openai = new OpenAI({
+//   apiKey: process.env['OPENAI_API_KEY'] = 'sk-proj-l8wxY8W1XvrlJKBeoWgiT3BlbkFJJEsxnDeSwVAToZ4VgVPi', 
+// });
+
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
-// const appIcon = ;
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 const iconPath = path.join(process.env.VITE_PUBLIC, 'icon.png');
@@ -23,6 +28,12 @@ const iconPath = path.join(process.env.VITE_PUBLIC, 'icon.png');
 let win: BrowserWindow | null
 
 function createWindow() {
+  if (win) {
+    win.focus();
+    return;
+  }
+
+
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, '../src/Assets/icon.png'),
     width: 650,
@@ -37,7 +48,7 @@ function createWindow() {
     },
   })
   // Test active push message to Renderer-process.
-  
+
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -45,7 +56,7 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
-  
+
 }
 
 app.on('window-all-closed', () => {
@@ -68,10 +79,11 @@ ipcMain.on("closeApp", () => {
   win?.hide();
 });
 
+// const xpFilePath = path.join(__dirname, './xp.json');
+// const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
 
-  // const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
-   const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
-
+ const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
+ const xpFilePath = path.join(app.getPath('userData'), 'xp.json');
 
 // Function to read tasks from the JSON file
 function getTasks() {
@@ -94,18 +106,44 @@ async function saveTasks(tasks: any) {
   }
 }
 
-// Function to generate a unique ID (consider using a stronger random number generator for production)
+async function getXp() {
+  try {
+    const data = fs.readFileSync(xpFilePath, 'utf-8');
+    const parsedData = JSON.parse(data); // Parse the JSON string
+    const newXp = parsedData.xp
+    console.log('y ahora2 ' + newXp)
+    return Number(newXp); // Return only the value of "xp"
+  } catch (error) {
+    console.error('Error reading xp:', error);
+    return 0; // Return 0 on error
+  }
+}
+
+
+async function addXp(newXp: number) {
+  try {
+    const currentXp = await getXp();
+    console.log('y ahora ' + currentXp)
+    const totalXp = await Number(currentXp) + Number(newXp);
+    console.log('y ahora ' + totalXp)
+    const data = JSON.stringify({ xp: totalXp }); // Update only the xp property
+
+    await fs.promises.writeFile(xpFilePath, data); // Use promises for safer async operations
+  } catch (error) {
+    console.error('Error saving xp:', error);
+  }
+
+}
+
+
 async function getNextTaskId() {
-  let lastId = 0; // Default to 1 if no tasks exist
+  let lastId = 0; 
   try {
     const tasks = await getTasks();
 
-    // Check if the file is empty
     if (tasks.length === 0) {
-      // If empty, set lastId to 1
       lastId = 1;
     } else {
-      // If not empty, use the existing logic
       lastId = Math.max(...tasks.map((task: { idTask: any; }) => task.idTask || 0)) || 1;
     }
   } catch (error) {
@@ -114,7 +152,29 @@ async function getNextTaskId() {
   return lastId + 1;
 }
 
+async function findDifficulty(task : Task) {
+  /*const completion = await openai.chat.completions.create({
+    max_tokens: 1,
+    messages: [{ role: "system", content: `Your response must be just a single number, ommit anything else. Estimate difficulty (1-10):\n\nTask Name: ${task.TaskName}\n\nTask Description: ${task.TaskDesc}. Number:` }],
+    model: "gpt-3.5-turbo",
+  });
 
+  return completion.choices[0].message.content;*/
+  if (1>2){
+    console.log(task)
+  }
+  return Math.floor(Math.random() * 10) + 1
+}
+ipcMain.on('getXP', async(event: Electron.IpcMainEvent) => {
+  try{
+    const xp = await getXp();
+    event.reply('sendXP', xp);
+    console.log('exp: ' + xp);
+  } catch(error) {
+    console.error('Connection refused:', error);
+    event.reply('xp-error', (error as Error).message); // Send error message
+  }
+})
 
 ipcMain.on('getTasks', async (event: Electron.IpcMainEvent) => {
   try {
@@ -129,26 +189,31 @@ ipcMain.on('getTasks', async (event: Electron.IpcMainEvent) => {
 ipcMain.on('addTask', async (event, newTaskJSON) => {
   try {
     const newTask = JSON.parse(newTaskJSON);
-    const nextId = await getNextTaskId(); // Generate unique ID (optional)
-
+    const nextId = await getNextTaskId();
+    if (1>2){
+      console.log(event)
+    }
+    console.log(newTask)
     const tasks = await getTasks();
+    
 
-    // Check if a task with the same ID already exists
     const existingTaskIndex = tasks.findIndex((task: { idTask: any; }) => task.idTask === newTask.idTask);
 
     if (existingTaskIndex !== -1 && existingTaskIndex !== null && existingTaskIndex !== undefined) {
-      // Update the existing task
+      // Update 
+      newTask.TaskDiff = Number(await findDifficulty(newTask));
       tasks[existingTaskIndex] = { ...tasks[existingTaskIndex], ...newTask }; // Merge updated data
       console.log(`Task with ID ${newTask.idTask} updated.`);
     } else {
-      // If no existing ID, assign the generated ID (if applicable) and add the new task
-      newTask.idTask = nextId || 1; // Use generated ID or calculate based on length
+      // Insert 
+      newTask.TaskDiff = Number(await findDifficulty(newTask));
+      newTask.idTask = nextId || 1; 
       tasks.push(newTask);
-      console.log(`Task with ID ${event} added.`);
+      console.log(`Task with ID ${newTask} added.`);
     }
-
-    await saveTasks(tasks); // Pass the updated tasks array
-    win?.webContents.send('taskAdded'); // Notify the renderer process (optional)
+    
+    await saveTasks(tasks); 
+    win?.webContents.send('taskAdded'); 
 
 
   } catch (error) {
@@ -160,35 +225,22 @@ ipcMain.on('deleteTask', async (event, ids) => {
   try {
     const tasks = await getTasks();
 
-    // Check if ids is an array
     if (!Array.isArray(ids)) {
       console.error('Invalid ID format. Expected an array of IDs.');
       event.sender.send('deleteTaskError', 'Invalid ID format.');
       return;
     }
 
-    // Initialize an empty array to store deleted task IDs
     const deletedIDs = [];
 
-    // Iterate through the IDs array
     for (const id of ids) {
-      // Find the task index based on the ID
       const taskIndex = tasks.findIndex((task: { idTask: any }) => task.idTask === id);
-
-      // Check if the task was found
       if (taskIndex !== -1) {
-        // Remove the task from the array
         tasks.splice(taskIndex, 1);
-
-        // Add the deleted ID to the deletedIDs array
         deletedIDs.push(id);
       }
     }
-
-    // Save the updated tasks array
     await saveTasks(tasks);
-
-    // Send a success message with an array of deleted IDs
     event.sender.send('deleteTaskSuccess', deletedIDs);
   } catch (error) {
     console.error('Error deleting task:', error);
@@ -208,20 +260,16 @@ ipcMain.on('changeStatusTask', async (event, id) => {
       return;
     }
 
-    // Create a copy of the task object to modify
     const taskToUpdate = { ...tasks[taskIndex] };
-
-    // Invert the taskstatus property
     taskToUpdate.TaskStatus = !taskToUpdate.TaskStatus;
-
-    // Update the task at the specific index in the original array
+    const xpToAdd = taskToUpdate.TaskStatus ? taskToUpdate.TaskDiff*7 : -taskToUpdate.TaskDiff*7; // Add/subtract XP based on new status
     tasks[taskIndex] = taskToUpdate;
 
     console.log(`Task with ID ${id} status updated.`);
-
-    // Save the updated tasks array
     await saveTasks(tasks);
-    win?.webContents.send('taskAdded'); // Notify the renderer process (optional)
+    await addXp(Number(xpToAdd));
+    win?.webContents.send('changeXP',Number(xpToAdd));
+    win?.webContents.send('taskAdded'); 
   } catch (error) {
     console.error('Error updating task status:', error);
     event.sender.send('editTaskError', (error as Error).message);
@@ -247,19 +295,19 @@ ipcMain.on('editTask', async (event, id) => {
   }
 });
 
-autoUpdater.on("update-available", (info) =>{
+autoUpdater.on("update-available", (info) => {
   win?.webContents.send('checkingUdp', 'Update available')
-    console.log('available', info)
+  console.log('available', info)
   let pth = autoUpdater.downloadUpdate();
   win?.webContents.send('checkingUdp', pth)
 })
-autoUpdater.on("update-not-available", (info) =>{
+autoUpdater.on("update-not-available", (info) => {
   win?.webContents.send('checkingUdp', '')
-    console.log('not',info)
+  console.log('not', info)
 })
-autoUpdater.on("update-downloaded", (info) =>{
+autoUpdater.on("update-downloaded", (info) => {
   win?.webContents.send('checkingUdp', 'Installing...')
-    console.log('checking',info)
+  console.log('checking', info)
 })
 autoUpdater.on('error', (error) => {
   win?.webContents.send('checkingUdp', error)
@@ -270,25 +318,26 @@ app.whenReady().then(() => {
   autoUpdater.checkForUpdatesAndNotify();
 
   win?.webContents.on('did-finish-load', () => {
-    
+
     // Check if win is not null before accessing its properties
     if (win) {
       win.webContents.send('checkingUdp', 'Checking for updates');
-      
-      
 
-      
-    const tray = new Tray(nativeImage.createFromPath(iconPath));
+
+
+
+      const tray = new Tray(nativeImage.createFromPath(iconPath));
       tray.setImage(iconPath);
 
-      
+
       tray.setToolTip('Questify')
-      tray.on('double-click',()=>{
+      tray.on('double-click', () => {
         win?.isVisible() ? win?.hide() : win?.show();
       })
-      let template = [{label:'exit',
+      let template = [{
+        label: 'exit',
         click: async () => {
-          win?.close(); 
+          win?.close();
         }
       }];
       let contextMenu = Menu.buildFromTemplate(template);
@@ -297,5 +346,7 @@ app.whenReady().then(() => {
       console.error('Window not yet created. Unable to send message.');
     }
   });
+
+
 });
 
