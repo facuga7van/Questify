@@ -182,7 +182,7 @@ function TaskList() {
                 </label>
               </div>
               <div className="taskContent">
-                <span className="taskNameCont"><h1 className="taskName">{task.TaskName}</h1><h3>+{7 * task.TaskDiff} xp</h3></span>
+                <span className="taskNameCont group hover:group"><h1 className="taskName">{task.TaskName}</h1><h3 className='opacity-0 group-hover:opacity-100 transition-opacity duration-300'>+{7 * task.TaskDiff} xp</h3></span>
                 <div className="taskDesc"><h3>{task.TaskDesc}</h3></div>
               </div>
               <div className='taskControls'>
