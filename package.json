@@ -3,7 +3,7 @@
   "private": false,
   "description": "Quest book for your daily tasks",
   "author": "Facundo Galvan",
-  "version": "0.0.11",
+  "version": "0.0.13",
   "type": "module",
   "scripts": {
     "start": "electron .",
@@ -19,8 +19,9 @@
   },
   "dependencies": {
     "autoprefixer": "^10.4.19",
+    "dotenv": "^16.4.5",
     "mysql": "^2.18.1",
-    "openai": "^4.39.1",
+    "openai": "^4.40.0",
     "postcss": "^8.4.38",
     "promise-mysql": "^5.2.0",
     "react": "^18.2.0",

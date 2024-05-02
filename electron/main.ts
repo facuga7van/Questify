@@ -5,10 +5,11 @@ import fs from 'fs'
 import { autoUpdater } from 'electron-updater'
 import OpenAI from "openai";
 import { Task } from '../src/Data/Interfaces/taskTypes';
+import dotenv from "dotenv";
 
+dotenv.config()
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
 
 
 process.env.APP_ROOT = path.join(__dirname, '..')
@@ -17,7 +18,7 @@ export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_APIKEY });
+
 
 
 autoUpdater.autoDownload = false
@@ -25,6 +26,7 @@ autoUpdater.autoInstallOnAppQuit = true
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 const iconPath = path.join(process.env.VITE_PUBLIC, 'icon.png');
+const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY });
 
 let win: BrowserWindow | null
 
@@ -49,7 +51,7 @@ function createWindow() {
     },
   })
   // Test active push message to Renderer-process.
-
+  console.log(process.env['OPENAI_APIKEY'])
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -85,13 +87,13 @@ ipcMain.on("closeApp", () => {
   }
 });
 
-const configFilePath = path.join(__dirname, './config.json');
-const xpFilePath = path.join(__dirname, './xp.json');
-const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
+//  const configFilePath = path.join(__dirname, './config.json');
+//  const xpFilePath = path.join(__dirname, './xp.json');
+//  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
 
-//  const configFilePath = path.join(app.getPath('userData'), 'config.json');
-//  const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
-//  const xpFilePath = path.join(app.getPath('userData'), 'xp.json');
+   const configFilePath = path.join(app.getPath('userData'), 'config.json');
+   const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
+   const xpFilePath = path.join(app.getPath('userData'), 'xp.json');
 
 // Function to read tasks from the JSON file
 function getTasks() {
@@ -355,15 +357,18 @@ app.whenReady().then(() => {
       });
 
       let config = readConfig();
-
+      const version = app.getVersion()
+      console.log('version ' + version)
 
       let template = [{
+        label: `Version: ${version}`
+      },{
       label: config.keepTrayActive ? 'Disable Tray' : 'Enable Tray',  // Dynamic label based on config
       click: async () => {
         config.keepTrayActive = !config.keepTrayActive;  // Toggle the setting
         fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));  // Write the updated config
         // Update the tray menu label based on the new setting
-        template[0].label = config.keepTrayActive ? 'Disable Tray' : 'Enable Tray';
+        template[1].label = config.keepTrayActive ? 'Disable Tray' : 'Enable Tray';
         contextMenu = Menu.buildFromTemplate(template);
         tray.setContextMenu(contextMenu);
       }
