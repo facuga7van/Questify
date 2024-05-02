@@ -25,6 +25,17 @@
 
 .taskNameCont h3 {
   user-select: none;
+  opacity: 0;
+  font-style: italic;
+  transition: all 0.1s ease-in-out;
+  color: rgba(12, 141, 0, 0.808);
+  text-shadow: 
+    0 0 5px rgba(183, 2, 255, 0.2), /* Inner white glow */
+    0 0 5px rgba(0, 255, 0, 0.9); /* Green outer glow */
+}
+.taskNameCont h3:hover {
+
+  user-select: none;
   font-style: italic;
   opacity: 0.8;
   color: rgba(12, 141, 0, 0.808);
@@ -32,6 +43,7 @@
     0 0 5px rgba(183, 2, 255, 0.2), /* Inner white glow */
     0 0 5px rgba(0, 255, 0, 0.9); /* Green outer glow */
 }
+
 
 
 .taskContainer {
