@@ -7,13 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+apikey.json
 node_modules
 dist
 dist-ssr
 dist-electron
 release
 *.local
-
+*.env
+*.env.production
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,55 +1,54 @@
 .custom-titlebar {
-    display: flex;
-    user-select: none;
-    background-image: url('../Assets/header.png'); 
-    background-position: top;
-    background-repeat: no-repeat;
-    height: 6rem;
-  }
-  
-  .titlebar {
-    flex-grow: 1;
-  }
-  
-  .buttons {
-    display: flex;
-    margin: 1rem 1.3rem;
-    color: rgba(0, 0, 0, 75%);
-    align-items: flex-start;
-  }
-  
-  .btnBox {
-    display: flex;
-    justify-content: center;
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
-    margin-right: 0.8rem;
-  }
+  display: flex;
+  user-select: none;
+  background-image: url('../Assets/header.png'); 
+  background-position: top;
+  background-repeat: no-repeat;
+  height: 5rem;
+}
 
-  .btnBox button {
-    width: 1rem; /* Ancho de 1 rem */
-    height: 1rem; /* Alto de 1 rem */
-    padding: 0; /* Eliminar cualquier relleno */
-    background-color: transparent; /* Establecer el fondo del botón como transparente */
-    border: none;
-    cursor: pointer;
-    margin-right: 0.8rem;
-  }
-  
-  .btnBox button img {
-    width: 100%; /* Ajustar el tamaño de la imagen al 100% del botón */
-    height: auto; /* Permitir que la altura de la imagen se ajuste automáticamente */
-    transition: all 0.3s ease;
-  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
-  }
-  
-  .btnBox button:hover img {
-    transform: scale(1.1);
-    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 1));
-  }
-  
-  .draggable {
-    -webkit-app-region: drag;
-  }
-  
+.titlebar {
+  flex-grow: 1;
+}
+
+.buttons {
+  display: flex;
+  margin: 1rem 1.3rem;
+  color: rgba(0, 0, 0, 75%);
+  align-items: flex-start;
+}
+
+.btnBox {
+  display: flex;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  margin-right: 0.8rem;
+}
+
+.btnBox button {
+  width: 1rem; /* Ancho de 1 rem */
+  height: 1rem; /* Alto de 1 rem */
+  padding: 0; /* Eliminar cualquier relleno */
+  background-color: transparent; /* Establecer el fondo del botón como transparente */
+  border: none;
+  cursor: pointer;
+  margin-right: 0.8rem;
+}
+
+.btnBox button img {
+  width: 100%; /* Ajustar el tamaño de la imagen al 100% del botón */
+  height: auto; /* Permitir que la altura de la imagen se ajuste automáticamente */
+  transition: all 0.3s ease;
+filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
+}
+
+.btnBox button:hover img {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 1));
+}
+
+.draggable {
+  -webkit-app-region: drag;
+}

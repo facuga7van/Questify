@@ -3,10 +3,13 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'fs'
 import { autoUpdater } from 'electron-updater'
-// import OpenAI from "openai";
-import {Task} from '../src/Data/Interfaces/taskTypes';
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+import OpenAI from "openai";
+import { Task } from '../src/Data/Interfaces/taskTypes';
+import dotenv from "dotenv";
 
+dotenv.config()
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 
 process.env.APP_ROOT = path.join(__dirname, '..')
@@ -15,15 +18,15 @@ export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
-// const openai = new OpenAI({
-//   apiKey: process.env['OPENAI_API_KEY'] = 'sk-proj-l8wxY8W1XvrlJKBeoWgiT3BlbkFJJEsxnDeSwVAToZ4VgVPi', 
-// });
+
+
 
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 const iconPath = path.join(process.env.VITE_PUBLIC, 'icon.png');
+const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY });
 
 let win: BrowserWindow | null
 
@@ -48,7 +51,7 @@ function createWindow() {
     },
   })
   // Test active push message to Renderer-process.
-
+  console.log(process.env['OPENAI_APIKEY'])
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -76,14 +79,21 @@ ipcMain.on("minimizeApp", () => {
   win?.minimize();
 });
 ipcMain.on("closeApp", () => {
-  win?.hide();
+  let config = readConfig();
+  if (config.keepTrayActive) {
+    win?.hide();
+  } else {
+    win?.close();
+  }
 });
 
-// const xpFilePath = path.join(__dirname, './xp.json');
-// const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
+//  const configFilePath = path.join(__dirname, './config.json');
+//  const xpFilePath = path.join(__dirname, './xp.json');
+//  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
 
- const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
- const xpFilePath = path.join(app.getPath('userData'), 'xp.json');
+   const configFilePath = path.join(app.getPath('userData'), 'config.json');
+   const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
+   const xpFilePath = path.join(app.getPath('userData'), 'xp.json');
 
 // Function to read tasks from the JSON file
 function getTasks() {
@@ -135,9 +145,20 @@ async function addXp(newXp: number) {
 
 }
 
+function readConfig() {
+  try {
+    const data = fs.readFileSync(configFilePath, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error reading config file:', error);
+    return { keepTrayActive: true }; // Set default if error occurs
+  }
+}
+
+
 
 async function getNextTaskId() {
-  let lastId = 0; 
+  let lastId = 0;
   try {
     const tasks = await getTasks();
 
@@ -152,25 +173,27 @@ async function getNextTaskId() {
   return lastId + 1;
 }
 
-async function findDifficulty(task : Task) {
-  /*const completion = await openai.chat.completions.create({
+async function findDifficulty(task: Task) {
+  console.log(process.env.OPENAI_APIKEY )
+  const completion = await openai.chat.completions.create({
     max_tokens: 1,
     messages: [{ role: "system", content: `Your response must be just a single number, ommit anything else. Estimate difficulty (1-10):\n\nTask Name: ${task.TaskName}\n\nTask Description: ${task.TaskDesc}. Number:` }],
     model: "gpt-3.5-turbo",
   });
 
-  return completion.choices[0].message.content;*/
-  if (1>2){
-    console.log(task)
-  }
-  return Math.floor(Math.random() * 10) + 1
+  return completion.choices[0].message.content;
+  // if (1>2){
+  //   console.log(task)
+  // }
+  // return Math.floor(Math.random() * 10) + 1
 }
-ipcMain.on('getXP', async(event: Electron.IpcMainEvent) => {
-  try{
+
+ipcMain.on('getXP', async (event: Electron.IpcMainEvent) => {
+  try {
     const xp = await getXp();
     event.reply('sendXP', xp);
     console.log('exp: ' + xp);
-  } catch(error) {
+  } catch (error) {
     console.error('Connection refused:', error);
     event.reply('xp-error', (error as Error).message); // Send error message
   }
@@ -190,12 +213,12 @@ ipcMain.on('addTask', async (event, newTaskJSON) => {
   try {
     const newTask = JSON.parse(newTaskJSON);
     const nextId = await getNextTaskId();
-    if (1>2){
+    if (1 > 2) {
       console.log(event)
     }
     console.log(newTask)
     const tasks = await getTasks();
-    
+
 
     const existingTaskIndex = tasks.findIndex((task: { idTask: any; }) => task.idTask === newTask.idTask);
 
@@ -207,13 +230,13 @@ ipcMain.on('addTask', async (event, newTaskJSON) => {
     } else {
       // Insert 
       newTask.TaskDiff = Number(await findDifficulty(newTask));
-      newTask.idTask = nextId || 1; 
+      newTask.idTask = nextId || 1;
       tasks.push(newTask);
       console.log(`Task with ID ${newTask} added.`);
     }
-    
-    await saveTasks(tasks); 
-    win?.webContents.send('taskAdded'); 
+
+    await saveTasks(tasks);
+    win?.webContents.send('taskAdded');
 
 
   } catch (error) {
@@ -262,14 +285,14 @@ ipcMain.on('changeStatusTask', async (event, id) => {
 
     const taskToUpdate = { ...tasks[taskIndex] };
     taskToUpdate.TaskStatus = !taskToUpdate.TaskStatus;
-    const xpToAdd = taskToUpdate.TaskStatus ? taskToUpdate.TaskDiff*7 : -taskToUpdate.TaskDiff*7; // Add/subtract XP based on new status
+    const xpToAdd = taskToUpdate.TaskStatus ? taskToUpdate.TaskDiff * 7 : -taskToUpdate.TaskDiff * 7; // Add/subtract XP based on new status
     tasks[taskIndex] = taskToUpdate;
 
     console.log(`Task with ID ${id} status updated.`);
     await saveTasks(tasks);
     await addXp(Number(xpToAdd));
-    win?.webContents.send('changeXP',Number(xpToAdd));
-    win?.webContents.send('taskAdded'); 
+    win?.webContents.send('changeXP', Number(xpToAdd));
+    win?.webContents.send('taskAdded');
   } catch (error) {
     console.error('Error updating task status:', error);
     event.sender.send('editTaskError', (error as Error).message);
@@ -313,6 +336,7 @@ autoUpdater.on('error', (error) => {
   win?.webContents.send('checkingUdp', error)
   console.error('Error during update check:', error);
 });
+
 app.whenReady().then(() => {
   createWindow();
   autoUpdater.checkForUpdatesAndNotify();
@@ -324,24 +348,39 @@ app.whenReady().then(() => {
       win.webContents.send('checkingUdp', 'Checking for updates');
 
 
-
-
       const tray = new Tray(nativeImage.createFromPath(iconPath));
       tray.setImage(iconPath);
 
-
-      tray.setToolTip('Questify')
+      tray.setToolTip('Questify');
       tray.on('double-click', () => {
         win?.isVisible() ? win?.hide() : win?.show();
-      })
+      });
+
+      let config = readConfig();
+      const version = app.getVersion()
+      console.log('version ' + version)
+
       let template = [{
-        label: 'exit',
-        click: async () => {
+        label: `Version: ${version}`
+      },{
+      label: config.keepTrayActive ? 'Disable Tray' : 'Enable Tray',  // Dynamic label based on config
+      click: async () => {
+        config.keepTrayActive = !config.keepTrayActive;  // Toggle the setting
+        fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));  // Write the updated config
+        // Update the tray menu label based on the new setting
+        template[1].label = config.keepTrayActive ? 'Disable Tray' : 'Enable Tray';
+        contextMenu = Menu.buildFromTemplate(template);
+        tray.setContextMenu(contextMenu);
+      }
+    },
+    {
+      label: 'Exit',
+      click: async () => {
           win?.close();
-        }
-      }];
-      let contextMenu = Menu.buildFromTemplate(template);
-      tray.setContextMenu(contextMenu);
+      }
+    }];
+    let contextMenu = Menu.buildFromTemplate(template);
+    tray.setContextMenu(contextMenu);
     } else {
       console.error('Window not yet created. Unable to send message.');
     }
