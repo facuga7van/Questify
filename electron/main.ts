@@ -9,9 +9,6 @@ import { Task } from '../src/Data/Interfaces/taskTypes';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
- const openai = new OpenAI({
-   apiKey: process.env['OPENAI_API_KEY'],
- });
 
 
 process.env.APP_ROOT = path.join(__dirname, '..')
@@ -20,6 +17,7 @@ export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
+const openai = new OpenAI({ apiKey: process.env.OPENAI_APIKEY });
 
 
 autoUpdater.autoDownload = false
@@ -174,6 +172,7 @@ async function getNextTaskId() {
 }
 
 async function findDifficulty(task: Task) {
+  console.log(process.env.OPENAI_APIKEY )
   const completion = await openai.chat.completions.create({
     max_tokens: 1,
     messages: [{ role: "system", content: `Your response must be just a single number, ommit anything else. Estimate difficulty (1-10):\n\nTask Name: ${task.TaskName}\n\nTask Description: ${task.TaskDesc}. Number:` }],
@@ -186,6 +185,7 @@ async function findDifficulty(task: Task) {
   // }
   // return Math.floor(Math.random() * 10) + 1
 }
+
 ipcMain.on('getXP', async (event: Electron.IpcMainEvent) => {
   try {
     const xp = await getXp();
@@ -334,6 +334,7 @@ autoUpdater.on('error', (error) => {
   win?.webContents.send('checkingUdp', error)
   console.error('Error during update check:', error);
 });
+
 app.whenReady().then(() => {
   createWindow();
   autoUpdater.checkForUpdatesAndNotify();
