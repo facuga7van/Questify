@@ -5,13 +5,13 @@ import fs from 'fs'
 import { autoUpdater } from 'electron-updater'
 import OpenAI from "openai";
 import { Task } from '../src/Data/Interfaces/taskTypes';
-import apikey from '../apikey.json'
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const openai = new OpenAI({
-  apiKey: process.env['OPENAI_API_KEY'] = apikey.openaiApiKey,
-});
+ const openai = new OpenAI({
+   apiKey: process.env['OPENAI_API_KEY'],
+ });
 
 
 process.env.APP_ROOT = path.join(__dirname, '..')
