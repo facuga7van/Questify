@@ -29,6 +29,7 @@ function Footer() {
   return (
     
     <div className="custom-footer">
+      <div className='footerWarning'></div>
       <Progressbar/>
     </div>
   );
