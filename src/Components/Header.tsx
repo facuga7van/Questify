@@ -1,6 +1,6 @@
 import minimizeIcon from '../Assets/minimize2.png';
 import closeIcon from '../Assets/close2.png';
-import configIcon from '../Assets/config.png'
+// import configIcon from '../Assets/config.png'
 import '../Styles/Header.css';
 
 
@@ -20,9 +20,9 @@ function Header() {
       <div className="titlebar draggable"></div>
       <div className="buttons">
       <div className="btnBox">
-          <button className="minimizeBtn" onClick={minimizeApp}>
+          {/* <button className="minimizeBtn" onClick={minimizeApp}>
             <img src={configIcon} alt="Configuration" className="imageBtn mx-2" />
-          </button>
+          </button> */}
         </div>
         <div className="btnBox">
           <button className="minimizeBtn" onClick={minimizeApp}>

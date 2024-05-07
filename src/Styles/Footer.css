@@ -1,12 +1,13 @@
 
 
 .footerWarning{
-  margin-left: auto;
-  margin-right: auto;
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0;
+  margin-right: 0;
   justify-content: center;
-  text-align: center;
+  text-align: right;
   line-height: 1rem;
-  max-width: 5rem;
   flex-wrap: wrap;
   overflow: hidden;
   text-overflow: ellipsis;

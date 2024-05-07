@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { IpcRendererEvent } from '../../electron/preload';
+import { useSpring, animated } from 'react-spring';
 import '../Styles/TaskList.css';
 import { Task } from '../Data/Interfaces/taskTypes';
 import delImg from '../Assets/Trash.png';
@@ -26,6 +27,7 @@ function TaskList() {
       if (1 > 2) {
         console.log(event)
       }
+      
     };
     ipcRenderer.send('getTasks');
     ipcRenderer.on('showTasks', handleShowTasks);
@@ -49,22 +51,31 @@ function TaskList() {
       const container = document.getElementById('taskList');
       if (container) {
         const windowHeight = window.innerHeight;
-        const minHeight = 0.01 * windowHeight;
-        const maxHeight = 0.50 * windowHeight;
-
+        let minHeight, maxHeight;
+  
+        // Define diferentes valores para diferentes resoluciones de pantalla
+        if (window.screen.availHeight < 768) { // Por ejemplo, para dispositivos móviles
+          minHeight =  windowHeight / 3;
+          maxHeight =  windowHeight / 3;
+        } else { // Para pantallas más grandes
+          minHeight =  windowHeight * 0.15;
+          maxHeight =  windowHeight * 0.5;
+        }
+  
         const containerHeight = minHeight + (maxHeight - minHeight) * (windowHeight / screen.height);
-
+        console.log(windowHeight)
         container.style.height = containerHeight + 'px';
       }
     };
-
+  
     window.addEventListener('resize', handleResize);
     handleResize();
-
+  
     return () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+  
 
   const handleCheckDeleteChange = async (event: React.ChangeEvent<HTMLInputElement>, task: Task) => {
     const taskId = task.idTask || 0;
@@ -87,10 +98,10 @@ function TaskList() {
   const handleCompleteBtnClick = async (task: Task) => {
     try {
       await setTasksToDelete(tasksToDelete.filter(id => id !== task.idTask));
-      await ipcRenderer.send('changeStatusTask', task.idTask); // Await the promise for synchronous behavior
-      console.log('Task edit request sent successfully'); // Optional success message
+      await ipcRenderer.send('changeStatusTask', task.idTask); 
+      console.log('Task edit request sent successfully'); 
     } catch (error) {
-      console.error('Error sending edit request:', error); // Handle errors gracefully
+      console.error('Error sending edit request:', error); 
     }
   };
 
@@ -104,7 +115,7 @@ function TaskList() {
 
   ipcRenderer.on('taskAdded', handleEditTask);
 
-  const [xpGained, setXpGained] = useState(0); // State variable to hold experience gain
+  const [xpGained, setXpGained] = useState(0); 
   const expAlertRef = useRef<HTMLDivElement>(null);
 
 
@@ -123,9 +134,8 @@ function TaskList() {
       ipcRenderer.removeAllListeners('changeXP', handleXPChange);
     };
 
-    ipcRenderer.on('changeXP', handleXPChange); // Assuming 'taskAdded' sends XP gain
+    ipcRenderer.on('changeXP', handleXPChange); 
 
-    // Get the expAlert element on component mount
     const expAlertElement = document.getElementById('expAlert');
     if (expAlertElement && expAlertRef.current) {
       expAlertRef.current.textContent = `+${xpGained}xp`;
@@ -146,10 +156,19 @@ function TaskList() {
 
     ipcRenderer.on('deleteTaskSuccess', handleDeleteTaskSuccess);
 
+    
+
+
     return () => {
       ipcRenderer.removeAllListeners('deleteTaskSuccess', handleDeleteTaskSuccess);
     };
   }, [taskList]);
+  
+  const [fade] = useSpring(() => ({
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  }));
+
 
   return (
     <div>
@@ -174,7 +193,7 @@ function TaskList() {
         {taskList
           .filter(task => task.idTask !== undefined && !task.TaskStatus)
           .map((task, index) => (
-            <div className="taskContainer" key={index}>
+            <animated.div style={fade} className="taskContainer" key={index}>
               <div className="taskImgCont">
                 <label className="imgBtn">
                   <input type="checkbox" checked={false} className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
@@ -205,13 +224,13 @@ function TaskList() {
                   </label>
                 </div>
               </div>
-            </div>
+            </animated.div>
           ))}
         {hasConfirmedTasks && <div className='divider'><img src={divider} className="dividerImg" alt="Divider"></img></div>}
         {taskList
           .filter(task => task.idTask !== undefined && task.TaskStatus)
           .map((task, index) => (
-            <div className="taskContainerFinished" key={index}>
+            <animated.div style={fade} className="taskContainerFinished" key={index}>
               <div className="taskImgCont">
                 <label className="imgBtn">
                   <input type="checkbox" checked={true} className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
@@ -222,7 +241,7 @@ function TaskList() {
                 <h1 className="taskName">{task.TaskName}</h1>
                 <div className="taskDesc"><h3>{task.TaskDesc}</h3></div>
               </div>
-            </div>
+            </animated.div>
           ))}
       </div>
     </div>
