@@ -3,6 +3,7 @@ import titleLeft from '../Assets/titleLeft.png';
 import titleRight from '../Assets/titleRight.png';
 import type { IpcRendererEvent } from '../../electron/preload';
 import divider from '../Assets/divider.png';
+import { useSpring, animated } from 'react-spring';
 import '../Styles/Form.css';
 import { Task } from '../Data/Interfaces/taskTypes';
 
@@ -53,24 +54,26 @@ function Form() {
 
   ipcRenderer.on('sendTaskEdit', handleEditTask);
 
+
+  const fade = useSpring({from: {opacity: 0},opacity: 1})
+
   return (
-    <div className='container mx-auto py-4 flex flex-col items-center'>
-      <div className="titleContainer my-5">
+    <animated.div style={fade} className='container mx-auto py-4 flex flex-col items-center'>
+      <div className="titleContainer" >
         <img src={titleLeft} alt="Title Left" className="titleImage mx-2" />
-        <h1 className="text-4xl font-semibold">Questify - To Do List</h1>
+        <h1 className="titleText">Questify - To Do List</h1>
         <img src={titleRight} alt="Title Right" className="titleImage mx-2" />
       </div>
-      <div className="w-full max-w-md mb-4">
+      <div className="formCont w-full max-w-md mb-4">
         <form id="taskForm" onSubmit={handleSubmit}>
           <div className="mb-4">
             <input
               type="text"
               id="taskInput"
-              value={taskName} // Directly assign value from state
+              value={taskName} 
               onChange={(e) => {
                 setTaskName(e.target.value);
       
-                // Remove the "needed" class if the input is not empty
                 if (taskName !== '') {
                   const taskInput = document.getElementById('taskInput');
                   taskInput?.classList.remove('needed');
@@ -84,7 +87,7 @@ function Form() {
           <div className="mb-4">
             <input
               id="descInput"
-              value={taskDesc} // Directly assign value from state
+              value={taskDesc}
               onChange={(e) => setTaskDesc(e.target.value)}
               className="w-full px-4 py-2 rounded-md focus:outline-none"
               placeholder="Quest description"
@@ -96,7 +99,7 @@ function Form() {
         </form>
       </div>
       <img src={divider} className="dividerImg" alt="Divider"></img>
-    </div>
+    </animated.div>
   );
 }
 

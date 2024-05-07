@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron'
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, MenuItemConstructorOptions } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'fs'
@@ -42,7 +42,7 @@ function createWindow() {
     width: 650,
     height: 800,
     minWidth: 650,
-    minHeight: 720,
+    minHeight: 500,
     frame: false,
     webPreferences: {
       nodeIntegration: false,
@@ -50,8 +50,6 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.mjs'),
     },
   })
-  // Test active push message to Renderer-process.
-  console.log(process.env['OPENAI_APIKEY'])
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -87,13 +85,13 @@ ipcMain.on("closeApp", () => {
   }
 });
 
-//  const configFilePath = path.join(__dirname, './config.json');
-//  const xpFilePath = path.join(__dirname, './xp.json');
-//  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
+  //  const configFilePath = path.join(__dirname, './config.json');
+  //  const xpFilePath = path.join(__dirname, './xp.json');
+  //  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
 
-   const configFilePath = path.join(app.getPath('userData'), 'config.json');
-   const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
-   const xpFilePath = path.join(app.getPath('userData'), 'xp.json');
+     const configFilePath = path.join(app.getPath('userData'), 'config.json');
+     const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');               // DESCOMENTAR ESTE PARA BUILD
+     const xpFilePath = path.join(app.getPath('userData'), 'xp.json');
 
 // Function to read tasks from the JSON file
 function getTasks() {
@@ -121,7 +119,6 @@ async function getXp() {
     const data = fs.readFileSync(xpFilePath, 'utf-8');
     const parsedData = JSON.parse(data); // Parse the JSON string
     const newXp = parsedData.xp
-    console.log('y ahora2 ' + newXp)
     return Number(newXp); // Return only the value of "xp"
   } catch (error) {
     console.error('Error reading xp:', error);
@@ -133,12 +130,9 @@ async function getXp() {
 async function addXp(newXp: number) {
   try {
     const currentXp = await getXp();
-    console.log('y ahora ' + currentXp)
     const totalXp = await Number(currentXp) + Number(newXp);
-    console.log('y ahora ' + totalXp)
-    const data = JSON.stringify({ xp: totalXp }); // Update only the xp property
-
-    await fs.promises.writeFile(xpFilePath, data); // Use promises for safer async operations
+    const data = JSON.stringify({ xp: totalXp }); 
+    await fs.promises.writeFile(xpFilePath, data); 
   } catch (error) {
     console.error('Error saving xp:', error);
   }
@@ -151,7 +145,7 @@ function readConfig() {
     return JSON.parse(data);
   } catch (error) {
     console.error('Error reading config file:', error);
-    return { keepTrayActive: true }; // Set default if error occurs
+    return { keepTrayActive: true };
   }
 }
 
@@ -192,7 +186,6 @@ ipcMain.on('getXP', async (event: Electron.IpcMainEvent) => {
   try {
     const xp = await getXp();
     event.reply('sendXP', xp);
-    console.log('exp: ' + xp);
   } catch (error) {
     console.error('Connection refused:', error);
     event.reply('xp-error', (error as Error).message); // Send error message
@@ -343,7 +336,6 @@ app.whenReady().then(() => {
 
   win?.webContents.on('did-finish-load', () => {
 
-    // Check if win is not null before accessing its properties
     if (win) {
       win.webContents.send('checkingUdp', 'Checking for updates');
 
@@ -358,27 +350,47 @@ app.whenReady().then(() => {
 
       let config = readConfig();
       const version = app.getVersion()
-      console.log('version ' + version)
 
-      let template = [{
-        label: `Version: ${version}`
-      },{
-      label: config.keepTrayActive ? 'Disable Tray' : 'Enable Tray',  // Dynamic label based on config
-      click: async () => {
-        config.keepTrayActive = !config.keepTrayActive;  // Toggle the setting
-        fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));  // Write the updated config
-        // Update the tray menu label based on the new setting
-        template[1].label = config.keepTrayActive ? 'Disable Tray' : 'Enable Tray';
-        contextMenu = Menu.buildFromTemplate(template);
-        tray.setContextMenu(contextMenu);
-      }
-    },
-    {
-      label: 'Exit',
-      click: async () => {
-          win?.close();
-      }
-    }];
+      let template: MenuItemConstructorOptions[] = [
+        { label: `Version: ${version}` },
+        { type: 'separator' },
+        {
+          label: 'System Tray',
+          type: 'checkbox',
+          checked: config.keepTrayActive,
+          click: async () => {
+            config.keepTrayActive = !config.keepTrayActive;
+            fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+
+            template[2].checked = config.keepTrayActive;
+
+            const contextMenu = Menu.buildFromTemplate(template);
+            tray.setContextMenu(contextMenu);
+          }
+        },
+        {
+          label: 'Always on top',
+          type: 'checkbox',
+          checked: config.keepOnTop,
+          click: async () => {
+            config.keepOnTop = !config.keepOnTop;
+            fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+
+            template[3].checked = config.keepOnTop;
+
+            win?.setAlwaysOnTop(config.keepOnTop, 'screen-saver', 1);
+            const contextMenu = Menu.buildFromTemplate(template);
+            tray.setContextMenu(contextMenu);
+          }
+        },
+        {
+          label: 'Exit',
+          click: async () => {
+            win?.close();
+          }
+        }
+      ];
+      
     let contextMenu = Menu.buildFromTemplate(template);
     tray.setContextMenu(contextMenu);
     } else {

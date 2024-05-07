@@ -3,13 +3,18 @@
     display: flex;
     align-items: center;
     user-select: none;
+    margin-bottom: 2vh;
+    margin-top: 8vh;
     color: rgba(0, 0, 0, 70%);
   }
   #taskInput, #descInput {
     background-color: rgba(0, 0, 0, 0.2);
     color: white;
   }
-  
+  .titleText{
+    font-size: 2rem;
+    font-weight: bold;
+  }
   #taskInput::placeholder, #descInput::placeholder {
     color: rgba(255, 255, 255, 0.5);
   }
@@ -23,7 +28,7 @@
     box-shadow: 0px 0px 0px rgba(255, 0, 0, 0.2) ;
   }
   .titleImage {
-    width: 7rem;
+    width: 6rem;
     height: 100%;
   }
   
@@ -62,3 +67,23 @@
     box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
     transform: translateY(2px); /* Moves the button down to simulate a press */
   }
+
+  @media screen and (max-height: 768px) {
+    /* Ajustes para resoluciones menores o iguales a 768px */
+    .titleText{
+      font-size: 1.7rem;
+    }
+    #taskInput, #descInput {
+      font-size: 14px;
+      padding: 0.3rem;
+    }
+    .rpgBtn {
+      padding: 4px 16px;
+      font-size: 16px;
+    }
+  
+    .dividerImg {
+      width: 20rem;
+    }
+  }
+  

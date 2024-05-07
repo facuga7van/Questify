@@ -4,7 +4,9 @@
   background-image: url('../Assets/header.png'); 
   background-position: top;
   background-repeat: no-repeat;
-  height: 5rem;
+  height: 5.5rem;
+  width: 100%;
+  position: fixed;
 }
 
 .titlebar {

@@ -7,5 +7,5 @@ export interface Task {
   }
 
   export interface TaskListProps {
-    tasksProp: Task[]; // Cambia el nombre del prop para evitar la duplicación
+    tasksProp: Task[];
   }
