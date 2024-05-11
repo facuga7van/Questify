@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { IpcRendererEvent } from '../../electron/preload';
-import { useSpring, animated } from 'react-spring';
 import '../Styles/TaskList.css';
 import { Task } from '../Data/Interfaces/taskTypes';
 import delImg from '../Assets/Trash.png';
@@ -163,11 +162,6 @@ function TaskList() {
       ipcRenderer.removeAllListeners('deleteTaskSuccess', handleDeleteTaskSuccess);
     };
   }, [taskList]);
-  
-  const [fade] = useSpring(() => ({
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  }));
 
 
   return (
@@ -193,7 +187,7 @@ function TaskList() {
         {taskList
           .filter(task => task.idTask !== undefined && !task.TaskStatus)
           .map((task, index) => (
-            <animated.div style={fade} className="taskContainer" key={index}>
+            <div className="taskContainer" key={index}>
               <div className="taskImgCont">
                 <label className="imgBtn">
                   <input type="checkbox" checked={false} className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
@@ -224,13 +218,13 @@ function TaskList() {
                   </label>
                 </div>
               </div>
-            </animated.div>
+            </div>
           ))}
         {hasConfirmedTasks && <div className='divider'><img src={divider} className="dividerImg" alt="Divider"></img></div>}
         {taskList
           .filter(task => task.idTask !== undefined && task.TaskStatus)
           .map((task, index) => (
-            <animated.div style={fade} className="taskContainerFinished" key={index}>
+            <div className="taskContainerFinished" key={index}>
               <div className="taskImgCont">
                 <label className="imgBtn">
                   <input type="checkbox" checked={true} className="checkFinish" onClick={() => handleCompleteBtnClick(task)} />
@@ -241,7 +235,7 @@ function TaskList() {
                 <h1 className="taskName">{task.TaskName}</h1>
                 <div className="taskDesc"><h3>{task.TaskDesc}</h3></div>
               </div>
-            </animated.div>
+            </div>
           ))}
       </div>
     </div>

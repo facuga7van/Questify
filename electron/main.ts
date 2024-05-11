@@ -15,6 +15,8 @@ import { autoUpdater } from "electron-updater";
 import OpenAI from "openai";
 import { Task } from "../src/Data/Interfaces/taskTypes";
 import dotenv from "dotenv";
+import { addDoc, doc, setDoc } from "firebase/firestore";
+import {appFs,db} from '../src/Data/firebase';
 
 dotenv.config();
 
@@ -25,6 +27,7 @@ process.env.APP_ROOT = path.join(__dirname, "..");
 export const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 export const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
+
 
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
@@ -62,7 +65,6 @@ function createWindow() {
     if (VITE_DEV_SERVER_URL) {
       win.loadURL(VITE_DEV_SERVER_URL);
     } else {
-      // win.loadFile('dist/index.html')
       win.loadFile(path.join(RENDERER_DIST, "index.html"));
     }
   }
@@ -93,13 +95,14 @@ ipcMain.on("closeApp", () => {
   }
 });
 
-//  const configFilePath = path.join(__dirname, './config.json');
-//  const xpFilePath = path.join(__dirname, './xp.json');
-//  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
 
-const configFilePath = path.join(app.getPath("userData"), "config.json");
-const tasksFilePath = path.join(app.getPath("userData"), "tasks.json"); // DESCOMENTAR ESTE PARA BUILD
-const xpFilePath = path.join(app.getPath("userData"), "xp.json");
+  const configFilePath = path.join(__dirname, './config.json');
+  const xpFilePath = path.join(__dirname, './xp.json');
+  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
+
+// const configFilePath = path.join(app.getPath("userData"), "config.json");
+// const tasksFilePath = path.join(app.getPath("userData"), "tasks.json"); // DESCOMENTAR ESTE PARA BUILD
+// const xpFilePath = path.join(app.getPath("userData"), "xp.json");
 
 // Function to read tasks from the JSON file
 function getTasks() {
@@ -115,6 +118,7 @@ function getTasks() {
 // Function to save tasks to the JSON file
 async function saveTasks(tasks: any) {
   try {
+    
     const data = JSON.stringify(tasks, null, 2); // Pretty-print for readability
     fs.writeFileSync(tasksFilePath, data);
   } catch (error) {
@@ -214,41 +218,24 @@ ipcMain.on("getTasks", async (event: Electron.IpcMainEvent) => {
 });
 
 ipcMain.on("addTask", async (event, newTaskJSON) => {
-  try {
-    const newTask = JSON.parse(newTaskJSON);
-    const nextId = await getNextTaskId();
-    if (1 > 2) {
-      console.log(event);
-    }
-    console.log(newTask);
-    const tasks = await getTasks();
-
-    const existingTaskIndex = tasks.findIndex(
-      (task: { idTask: any }) => task.idTask === newTask.idTask
-    );
-
-    if (
-      existingTaskIndex !== -1 &&
-      existingTaskIndex !== null &&
-      existingTaskIndex !== undefined
-    ) {
-      // Update
-      newTask.TaskDiff = Number(await findDifficulty(newTask));
-      tasks[existingTaskIndex] = { ...tasks[existingTaskIndex], ...newTask }; // Merge updated data
-      console.log(`Task with ID ${newTask.idTask} updated.`);
-    } else {
+  const newTask = JSON.parse(newTaskJSON);
       // Insert
-      newTask.TaskDiff = Number(await findDifficulty(newTask));
-      newTask.idTask = nextId || 1;
-      tasks.push(newTask);
-      console.log(`Task with ID ${newTask} added.`);
-    }
-
-    await saveTasks(tasks);
-    win?.webContents.send("taskAdded");
+    newTask.TaskDiff = Number(await findDifficulty(newTask));
+    
+    try {
+      await setDoc(doc(db, "questify", "LA"), {
+          id: newTask.idTask,
+          TaskName: newTask.TaskName,
+          TaskDesc: newTask.TaskDesc,
+          TaskDiff: newTask.TaskDiff,
+          TaskStatus: newTask.TaskStatus
+      });
   } catch (error) {
-    console.error("Error adding task:", error);
+      console.error("Error writing to Firestore:", error);
   }
+
+    win?.webContents.send("taskAdded");
+
 });
 
 ipcMain.on("deleteTask", async (event, ids) => {
@@ -379,15 +366,14 @@ autoUpdater.on("update-downloaded", (_event) => {
   }
 });
 
-app.whenReady().then(() => {
+app.whenReady().then( async() => {
   createWindow();
   autoUpdater.checkForUpdatesAndNotify();
-
-
-  win?.webContents.on("did-finish-load", () => {
+  
+  win?.webContents.on("did-finish-load", async () => {
     if (win) {
       win.webContents.send("checkingUdp", "Checking for updates");
-
+      
       const tray = new Tray(nativeImage.createFromPath(iconPath));
       tray.setImage(iconPath);
 

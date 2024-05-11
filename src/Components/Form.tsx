@@ -3,7 +3,6 @@ import titleLeft from '../Assets/titleLeft.png';
 import titleRight from '../Assets/titleRight.png';
 import type { IpcRendererEvent } from '../../electron/preload';
 import divider from '../Assets/divider.png';
-import { useSpring, animated } from 'react-spring';
 import '../Styles/Form.css';
 import { Task } from '../Data/Interfaces/taskTypes';
 
@@ -55,10 +54,9 @@ function Form() {
   ipcRenderer.on('sendTaskEdit', handleEditTask);
 
 
-  const fade = useSpring({from: {opacity: 0},opacity: 1})
 
   return (
-    <animated.div style={fade} className='container mx-auto py-4 flex flex-col items-center'>
+    <div className='container mx-auto py-4 flex flex-col items-center'>
       <div className="titleContainer" >
         <img src={titleLeft} alt="Title Left" className="titleImage mx-2" />
         <h1 className="titleText">Questify - To Do List</h1>
@@ -99,7 +97,7 @@ function Form() {
         </form>
       </div>
       <img src={divider} className="dividerImg" alt="Divider"></img>
-    </animated.div>
+    </div>
   );
 }
 

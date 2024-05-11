@@ -1,0 +1,20 @@
+.SignIn {
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  min-height: 100vh; 
+}
+
+.SignIn Button{
+  padding: 10px 20px;
+  background-color: #795649;
+  color: #f4e5c3;
+  border: 2px solid #c0a080; 
+  font-family: 'Goudy Bookletter 1911', serif; 
+  font-size: 18px;
+  text-shadow: 1px 1px 0px #a67c52; 
+  box-shadow: 2px 2px 0px #a67c52;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
