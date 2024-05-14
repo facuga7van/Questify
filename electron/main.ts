@@ -15,8 +15,8 @@ import { autoUpdater } from "electron-updater";
 import OpenAI from "openai";
 import { Task } from "../src/Data/Interfaces/taskTypes";
 import dotenv from "dotenv";
-import { addDoc, doc, setDoc } from "firebase/firestore";
-import {appFs,db} from '../src/Data/firebase';
+import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc } from "firebase/firestore";
+import {db} from '../src/Data/firebase';
 
 dotenv.config();
 
@@ -28,7 +28,6 @@ export const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 export const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 
-
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
@@ -36,12 +35,11 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, "public")
   : RENDERER_DIST;
 const iconPath = path.join(process.env.VITE_PUBLIC, "icon.png");
-const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY });
-
+const openai = new OpenAI({ apiKey: "sk-proj-yQgVh0vS7rEtwXir0npBT3BlbkFJTnkB40TsffTpohr7VtAa" });
+// const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY });
 let win: BrowserWindow | null;
 let updateCheck = false;
 let updateFound = false;
-
 
 function createWindow() {
   if (win) {
@@ -97,57 +95,121 @@ ipcMain.on("closeApp", () => {
 
 
   const configFilePath = path.join(__dirname, './config.json');
-  const xpFilePath = path.join(__dirname, './xp.json');
-  const tasksFilePath = path.join(__dirname, './tasks.json');        // DESCOMENTAR ESTE PARA DEV
 
 // const configFilePath = path.join(app.getPath("userData"), "config.json");
 // const tasksFilePath = path.join(app.getPath("userData"), "tasks.json"); // DESCOMENTAR ESTE PARA BUILD
 // const xpFilePath = path.join(app.getPath("userData"), "xp.json");
 
-// Function to read tasks from the JSON file
-function getTasks() {
+async function getTasks(userId:string) {
+
   try {
-    const data = fs.readFileSync(tasksFilePath, "utf-8");
-    return JSON.parse(data) || []; // Return empty array if file doesn't exist
+    const tasksCollectionRef = collection(db, "questify", userId, "tasks");
+    const q = query(tasksCollectionRef); // Filter by userId
+
+    const querySnapshot = await getDocs(q);
+    const tasks = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    return tasks;
   } catch (error) {
-    console.error("Error reading tasks:", error);
-    return [];
+    console.error("Error getting tasks:", error);
+    return []; // Return empty array on error
+  }
+}
+async function getTaskById(userId: string, id: string) {
+  try {
+    const taskDocRef = doc(collection(db, "questify", userId, "tasks"), id);
+    const taskSnapshot = await getDoc(taskDocRef);
+
+    if (taskSnapshot.exists()) {
+      const taskFounded = taskSnapshot.data()
+      taskFounded.id = id
+      return taskFounded; // Return the entire document data
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting task by id:", error);
+    return null;
   }
 }
 
-// Function to save tasks to the JSON file
-async function saveTasks(tasks: any) {
-  try {
+
+async function addTask(task:any,userId:any){
+  
+  if (task.id){
+    console.log('actualzio')
+      try {
+        await setDoc(doc(db, "questify", userId, "tasks",task.id), {
+          TaskName: task.TaskName,
+          TaskDesc: task.TaskDesc,
+          TaskDiff: task.TaskDiff,
+          TaskStatus: task.TaskStatus,
+          TaskDate: serverTimestamp()
+      });
+        return true;
+    } catch (e) {
+      
+    return false;
+    }
+  }else{
+    console.log('agrego')
+    try {
+      await addDoc(collection(db, "questify", userId, "tasks"), {
+        TaskName: task.TaskName,
+        TaskDesc: task.TaskDesc,
+        TaskDiff: task.TaskDiff,
+        TaskStatus: task.TaskStatus,
+        TaskDate: serverTimestamp()
+    });
+      return true;
+  } catch (e) {
     
-    const data = JSON.stringify(tasks, null, 2); // Pretty-print for readability
-    fs.writeFileSync(tasksFilePath, data);
+  return false;
+  }
+
+}
+}
+async function getXp(userId: string): Promise<number> {
+  try {
+    const userRef = doc(collection(db, "questify"), userId); // Use userId to construct path
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      if (userData && userData.currentXp) {
+        return Number(userData.currentXp); // Return the user's current XP
+      } else {
+        console.warn("User data missing 'currentXp' field");
+        return 0; // Return 0 if 'currentXp' is missing
+      }
+    } else {
+      console.warn("User document not found");
+      return 0; // Return 0 if the user document doesn't exist
+    }
   } catch (error) {
-    console.error("Error saving tasks:", error);
+    console.error("Error getting user XP:", error);
+    return 0; // Return 0 on any other error
   }
 }
 
-async function getXp() {
+
+async function addXp(newXp: number, userId:string) {
   try {
-    const data = fs.readFileSync(xpFilePath, "utf-8");
-    const parsedData = JSON.parse(data); // Parse the JSON string
-    const newXp = parsedData.xp;
-    return Number(newXp); // Return only the value of "xp"
+    const currentXp = await getXp(userId);
+
+    const totalXp = currentXp + newXp;
+
+    const userRef = doc(collection(db, "questify"), userId);
+    await setDoc(userRef, { currentXp: totalXp }, { merge: true });
+
+    win?.webContents.send("changeXP", newXp);
   } catch (error) {
-    console.error("Error reading xp:", error);
-    return 0; // Return 0 on error
+    console.error("Error saving XP to Firestore:", error);
   }
 }
 
-async function addXp(newXp: number) {
-  try {
-    const currentXp = await getXp();
-    const totalXp = (await Number(currentXp)) + Number(newXp);
-    const data = JSON.stringify({ xp: totalXp });
-    await fs.promises.writeFile(xpFilePath, data);
-  } catch (error) {
-    console.error("Error saving xp:", error);
-  }
-}
 
 function readConfig() {
   try {
@@ -157,24 +219,6 @@ function readConfig() {
     console.error("Error reading config file:", error);
     return { keepTrayActive: true };
   }
-}
-
-async function getNextTaskId() {
-  let lastId = 0;
-  try {
-    const tasks = await getTasks();
-
-    if (tasks.length === 0) {
-      lastId = 1;
-    } else {
-      lastId =
-        Math.max(...tasks.map((task: { idTask: any }) => task.idTask || 0)) ||
-        1;
-    }
-  } catch (error) {
-    console.error("Error getting last ID:", error);
-  }
-  return lastId + 1;
 }
 
 async function findDifficulty(task: Task) {
@@ -191,15 +235,11 @@ async function findDifficulty(task: Task) {
   });
 
   return completion.choices[0].message.content;
-  // if (1>2){
-  //   console.log(task)
-  // }
-  // return Math.floor(Math.random() * 10) + 1
 }
 
-ipcMain.on("getXP", async (event: Electron.IpcMainEvent) => {
+ipcMain.on("getXP", async (event: Electron.IpcMainEvent, userId:string) => {
   try {
-    const xp = await getXp();
+    const xp = await getXp(userId);
     event.reply("sendXP", xp);
   } catch (error) {
     console.error("Connection refused:", error);
@@ -207,9 +247,9 @@ ipcMain.on("getXP", async (event: Electron.IpcMainEvent) => {
   }
 });
 
-ipcMain.on("getTasks", async (event: Electron.IpcMainEvent) => {
+ipcMain.on("getTasks", async (event: Electron.IpcMainEvent, userId:string) => {
   try {
-    const tasks = await getTasks();
+    const tasks = await getTasks(userId);
     event.reply("showTasks", tasks); // Send tasks to the renderer
   } catch (error) {
     console.error("Connection refused:", error);
@@ -217,103 +257,83 @@ ipcMain.on("getTasks", async (event: Electron.IpcMainEvent) => {
   }
 });
 
-ipcMain.on("addTask", async (event, newTaskJSON) => {
-  const newTask = JSON.parse(newTaskJSON);
-      // Insert
+ipcMain.on("addTask", async (event, newTask) => {
+  
     newTask.TaskDiff = Number(await findDifficulty(newTask));
-    
-    try {
-      await setDoc(doc(db, "questify", "LA"), {
-          id: newTask.idTask,
-          TaskName: newTask.TaskName,
-          TaskDesc: newTask.TaskDesc,
-          TaskDiff: newTask.TaskDiff,
-          TaskStatus: newTask.TaskStatus
-      });
-  } catch (error) {
-      console.error("Error writing to Firestore:", error);
-  }
-
-    win?.webContents.send("taskAdded");
-
-});
-
-ipcMain.on("deleteTask", async (event, ids) => {
-  try {
-    const tasks = await getTasks();
-
-    if (!Array.isArray(ids)) {
-      console.error("Invalid ID format. Expected an array of IDs.");
-      event.sender.send("deleteTaskError", "Invalid ID format.");
-      return;
+    if (1>2){
+      console.log(event)
     }
-
-    const deletedIDs = [];
-
-    for (const id of ids) {
-      const taskIndex = tasks.findIndex(
-        (task: { idTask: any }) => task.idTask === id
-      );
-      if (taskIndex !== -1) {
-        tasks.splice(taskIndex, 1);
-        deletedIDs.push(id);
+      const userId = newTask.TaskUser;
+      const isok = await addTask(newTask,userId);
+      if (isok){
+        win?.webContents.send("taskAdded");
+      }else{
+        console.error("Connection refused:");
       }
-    }
-    await saveTasks(tasks);
-    event.sender.send("deleteTaskSuccess", deletedIDs);
-  } catch (error) {
-    console.error("Error deleting task:", error);
-    event.sender.send("deleteTaskError", (error as Error).message);
-  }
+
 });
 
-ipcMain.on("changeStatusTask", async (event, id) => {
+// ipcMain.on("deleteTask", async (event, ids,userId) => {
+  // try {
+  //   const tasks = await getTasks(userId);
+
+  //   if (!Array.isArray(ids)) {
+  //     console.error("Invalid ID format. Expected an array of IDs.");
+  //     event.sender.send("deleteTaskError", "Invalid ID format.");
+  //     return;
+  //   }
+
+  //   const deletedIDs = [];
+
+  //   for (const id of ids) {
+  //     const taskIndex = tasks.findIndex(
+  //       (task: { idTask: any }) => task.idTask === id
+  //     );
+  //     if (taskIndex !== -1) {
+  //       tasks.splice(taskIndex, 1);
+  //       deletedIDs.push(id);
+  //     }
+  //   }
+  //   await saveTasks(tasks);
+  //   event.sender.send("deleteTaskSuccess", deletedIDs);
+  // } catch (error) {
+  //   console.error("Error deleting task:", error);
+  //   event.sender.send("deleteTaskError", (error as Error).message);
+  // }
+// });
+
+ipcMain.on("changeStatusTask", async (event, id, userId ) => {
   try {
-    const tasks = await getTasks();
-    const taskIndex = tasks.findIndex(
-      (task: { idTask: any }) => task.idTask === id
-    );
-    if (taskIndex === -1) {
-      console.log("Task not found for update.");
-      event.sender.send("editTaskNotFound");
-      return;
-    }
+    const taskToUpd = await getTaskById(userId,id)
 
-    const taskToUpdate = { ...tasks[taskIndex] };
-    taskToUpdate.TaskStatus = !taskToUpdate.TaskStatus;
-    const xpToAdd = taskToUpdate.TaskStatus
-      ? taskToUpdate.TaskDiff * 7
-      : -taskToUpdate.TaskDiff * 7; // Add/subtract XP based on new status
-    tasks[taskIndex] = taskToUpdate;
-
+    if (taskToUpd){
+      taskToUpd.id = id;
+      taskToUpd.TaskStatus = !taskToUpd.TaskStatus;
+    let xpToAdd = taskToUpd.TaskStatus
+    ? taskToUpd.TaskDiff * 7
+    : -taskToUpd.TaskDiff * 7;
     console.log(`Task with ID ${id} status updated.`);
-    await saveTasks(tasks);
-    await addXp(Number(xpToAdd));
+    await addTask(taskToUpd,userId);
+    await addXp(Number(xpToAdd),userId);
     win?.webContents.send("changeXP", Number(xpToAdd));
     win?.webContents.send("taskAdded");
+    }
   } catch (error) {
     console.error("Error updating task status:", error);
     event.sender.send("editTaskError", (error as Error).message);
   }
 });
 
-ipcMain.on("editTask", async (event, id) => {
-  try {
-    const tasks = await getTasks();
-    const taskIndex = tasks.findIndex(
-      (task: { idTask: any }) => task.idTask === id
-    );
-    console.log(taskIndex);
-    if (taskIndex === -1) {
-      console.log("Task not found for edit.");
-      event.sender.send("editTaskNotFound");
-      return;
+ipcMain.on("editTask", async (event, id,userId) => {
+  try{
+    const taskToEdit = await getTaskById(userId,id)
+    console.log('editar')
+    console.log(taskToEdit)
+    win?.webContents.send("sendTaskEdit", taskToEdit);
+  }catch(e){
+    if (1>2){
+      console.log(event)
     }
-
-    win?.webContents.send("sendTaskEdit", tasks[taskIndex]); // Send the task object
-  } catch (error) {
-    console.error("Error fetching task for edit:", error);
-    event.sender.send("editTaskError", (error as Error).message);
   }
 });
 
@@ -366,10 +386,12 @@ autoUpdater.on("update-downloaded", (_event) => {
   }
 });
 
+
 app.whenReady().then( async() => {
   createWindow();
+
   autoUpdater.checkForUpdatesAndNotify();
-  
+
   win?.webContents.on("did-finish-load", async () => {
     if (win) {
       win.webContents.send("checkingUdp", "Checking for updates");

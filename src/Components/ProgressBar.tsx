@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import '../Styles/ProgressBar.css';
 import type { IpcRendererEvent } from '../../electron/preload';
+import { useAuth } from '../AuthContext/index';
 
 export default function Progressbar() {
   const ipcRenderer = (window as any).ipcRenderer;
   const [level, setLevel] = useState(0);
   const [filled, setFilled] = useState(0);
   const [getXp, setGetXp] = useState(false);
-
+  const { currentUser } = useAuth();
   useEffect(() => {
     setGetXp(true);
   }, []);
@@ -17,7 +18,7 @@ export default function Progressbar() {
       const calculatedLevel = (newXP / 100);
       setLevel(Math.floor(calculatedLevel));
       const levelPercentage = calculatedLevel - Math.floor(calculatedLevel);
-	  console.log(levelPercentage + ' ' + calculatedLevel)
+	  // console.log(levelPercentage + ' ' + calculatedLevel)
       setFilled(levelPercentage * 100);
 	  setGetXp(false);
       ipcRenderer.removeAllListeners('changeXP');
@@ -27,7 +28,7 @@ export default function Progressbar() {
 	  
     };
 
-    ipcRenderer.send('getXP'); 
+    ipcRenderer.send('getXP',currentUser?.uid); 
     ipcRenderer.on('sendXP', handleXPChange); 
 	ipcRenderer.removeAllListeners('taskAdded');
     return () => ipcRenderer.removeAllListeners('changeXP');

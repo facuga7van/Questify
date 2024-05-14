@@ -1,5 +1,4 @@
 import { ipcRenderer, contextBridge } from 'electron';
-import '../src/Data/firebase';
 
 type IpcRendererEvent = import('electron').IpcRendererEvent;
 ipcRenderer.removeAllListeners('deleteTaskSuccess');

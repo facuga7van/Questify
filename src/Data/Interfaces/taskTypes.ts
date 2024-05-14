@@ -1,9 +1,10 @@
 export interface Task {
-    idTask: any;
+    id: any;
     TaskName: string;
     TaskDesc: string;
     TaskStatus: any;
     TaskDiff: number;
+    TaskUser:User;
   }
 
   export interface TaskListProps {
@@ -14,5 +15,4 @@ export interface Task {
     uid: string;
     displayName: string | null;
     email: string | null;
-    photoURL: string | null;
   }

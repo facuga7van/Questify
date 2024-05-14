@@ -3,9 +3,10 @@ import type { IpcRendererEvent } from '../../electron/preload';
 import { useEffect } from 'react';
 import Progressbar from './ProgressBar';
 
+
 function Footer() {
   const ipcRenderer = (window as any).ipcRenderer;
-
+  
   useEffect(() => {
     const showMessage = (event: IpcRendererEvent, message: string) => {
       const footerWarningElement = document.querySelector('.footerWarning') as Element;

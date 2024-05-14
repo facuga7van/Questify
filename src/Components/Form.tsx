@@ -5,30 +5,33 @@ import type { IpcRendererEvent } from '../../electron/preload';
 import divider from '../Assets/divider.png';
 import '../Styles/Form.css';
 import { Task } from '../Data/Interfaces/taskTypes';
+import { useAuth } from '@/AuthContext';
 
 function Form() {
   const ipcRenderer = (window as any).ipcRenderer;
   const [taskName, setTaskName] = useState('');
   const [taskDesc, setTaskDesc] = useState('');
-  const [idTask, setidTask] = useState('');
+  const [taskId, setTaskId] = useState('');
   const [isEdit, setIsEdit] = useState(false); 
-
+  const { currentUser } =  useAuth()
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     const newTask = {
-      idTask: idTask, 
+      id:taskId,
       TaskName: taskName,
       TaskDesc: taskDesc,
       TaskStatus: false,
+      TaskUser: currentUser?.uid
     };
 
     if (newTask.TaskName !== '') {
       console.log('se agrega')
-      ipcRenderer.send('addTask', JSON.stringify(newTask));
+      console.log(newTask)
+      ipcRenderer.send('addTask', newTask);
       setTaskName('');
       setTaskDesc('');
-      setidTask('');
+      setTaskId('');
       const taskInput = document.getElementById('taskInput');
       taskInput?.classList.remove('needed'); // Add the class conditionally
       setIsEdit(false);
@@ -38,12 +41,13 @@ function Form() {
 
     }
   };
-
-
+  
   const handleEditTask = (event: IpcRendererEvent,task: Task) => {
     setTaskName(task.TaskName || ''); // Set empty string if TaskName is missing
     setTaskDesc(task.TaskDesc || ''); // Set empty string if TaskDesc is missing
-    setidTask(task.idTask);
+    setTaskId(task.id || ''); // Set empty string if TaskDesc is missing
+    console.log('a editar')
+    console.log(task)
     if (1<2){
       console.log(event)
     }

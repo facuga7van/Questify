@@ -3,7 +3,9 @@ import path from 'node:path'
 import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
 import tsConfigPaths from "vite-tsconfig-paths"
+// import dotenv from 'dotenv'
 
+// dotenv.config() // load env vars from .env
 export default ({ mode }: { mode: string }) => {
 
   // Carga las variables de entorno del nivel de la aplicación a las variables de entorno del nivel del nodo.

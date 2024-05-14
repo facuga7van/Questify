@@ -1,50 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import '../Data/firebase'; // Assuming your Firebase config is here
+import { useState, useEffect } from 'react';
+import { getAuth } from 'firebase/auth';
+import '../Data/firebase';
 import {User} from '../Data/Interfaces/taskTypes';
+import { doSignInWithGoogle } from '../Data/auth';
 import '../Styles/Signin.css'
-
-const provider = new GoogleAuthProvider();
-
 
 
  function SignIn() {
-  const [user, setUser] = useState<User | null>(null); // Keep the type
+  const [user, setUser] = useState<User | null>(null);
   const auth = getAuth();
-
+  const [isSigningIn, setIsSigningIn] = useState(false)
  useEffect(() => {
-  // Handle user state changes for better UI control
   const unsubscribe = auth.onAuthStateChanged((currentUser) => {
    setUser(currentUser);
+
   });
 
-  return () => unsubscribe(); // Cleanup function to prevent memory leaks
+  return () => unsubscribe(); 
  }, [auth]);
 
- const handleGoogleSignIn = async () => {
-  try {
-   const result = await signInWithPopup(auth, provider);
-   const { user } = result; // Destructure authenticated user
-   setUser(user);
-
-   // Handle successful sign-in (navigate, update UI, etc.)
-   console.log('User signed in:', user); // Optional logging
-  } catch (error) {
-   console.error('Error signing in with Google:', error);
-   // Handle errors appropriately (display error messages)
-  }
- };
+const onGoogleSignIn = (e: { preventDefault: () => void; }) => {
+  e.preventDefault()
+  if (!isSigningIn) {
+      setIsSigningIn(true)
+      doSignInWithGoogle().catch(err => {
+          setIsSigningIn(false)
+          if (1>2){
+            console.log(err)
+          }
+      })
+  }
+}
 
  return (
   <div className='SignIn'>
-   {!user && ( // Only display sign-in button if not authenticated
-    <button onClick={handleGoogleSignIn}>Sign In with Google</button>
-   )}
-   {user && ( // Display user information or redirect after sign-in
-    <div>
-     <p>Welcome, {user.displayName}!</p>
-     <button onClick={() => auth.signOut()}>Sign Out</button>
-    </div>
+   {!user && (
+    <button onClick={onGoogleSignIn}>Sign In with Google</button>
    )}
   </div>
  );
