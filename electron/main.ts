@@ -35,8 +35,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, "public")
   : RENDERER_DIST;
 const iconPath = path.join(process.env.VITE_PUBLIC, "icon.png");
-const openai = new OpenAI({ apiKey: "sk-proj-yQgVh0vS7rEtwXir0npBT3BlbkFJTnkB40TsffTpohr7VtAa" });
-// const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY });
+ const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY });
 let win: BrowserWindow | null;
 let updateCheck = false;
 let updateFound = false;
