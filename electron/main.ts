@@ -15,7 +15,7 @@ import { autoUpdater } from "electron-updater";
 import OpenAI from "openai";
 import { Task } from "../src/Data/Interfaces/taskTypes";
 import dotenv from "dotenv";
-import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc } from "firebase/firestore";
 import {db} from '../src/Data/firebase';
 
 dotenv.config();
@@ -92,12 +92,10 @@ ipcMain.on("closeApp", () => {
   }
 });
 
-
+//DEV
   const configFilePath = path.join(__dirname, './config.json');
-
-// const configFilePath = path.join(app.getPath("userData"), "config.json");
-// const tasksFilePath = path.join(app.getPath("userData"), "tasks.json"); // DESCOMENTAR ESTE PARA BUILD
-// const xpFilePath = path.join(app.getPath("userData"), "xp.json");
+//BUILD
+  //const configFilePath = path.join(app.getPath("userData"), "config.json");
 
 async function getTasks(userId:string) {
 
@@ -272,7 +270,36 @@ ipcMain.on("addTask", async (event, newTask) => {
 
 });
 
-// ipcMain.on("deleteTask", async (event, ids,userId) => {
+ipcMain.on("deleteTask", async (event, ids, userId) => {
+  try {
+    // Validate input
+    
+    if (!Array.isArray(ids) || !ids.length) {
+      console.error("Invalid ID format. Expected an array of IDs.");
+      event.sender.send("deleteTaskError", "Invalid ID format.");
+      return;
+    }
+
+    // const tasksCollectionRef = collection(db, "questify", userId, "tasks");
+    const deletedTasks = [];
+
+    for (let id of ids) {
+      
+      // const taskRef = doc(tasksCollectionRef, id);
+      const taskDocRef = doc(collection(db, "questify", userId, "tasks"), id);
+      console.log(id)
+      console.log(taskDocRef)
+       await deleteDoc(taskDocRef);
+
+      deletedTasks.push(id);
+    }
+
+    event.sender.send("deleteTaskSuccess",deletedTasks);
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    event.sender.send("deleteTaskError", (error as Error).message);
+  }
+});
   // try {
   //   const tasks = await getTasks(userId);
 

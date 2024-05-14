@@ -17,7 +17,7 @@ function TaskList() {
       email: null
     } },
   ]);
-  const [tasksToDelete, setTasksToDelete] = useState<number[]>([]);
+  const [tasksToDelete, setTasksToDelete] = useState<string[]>([]);
   const [getTasks, setGetTasks] = useState(false);
 
   const hasConfirmedTasks = taskList.some(
@@ -55,11 +55,11 @@ function TaskList() {
     return () => {
       ipcRenderer.removeAllListeners("showTasks", handleShowTasks);
     };
-  }, [getTasks, currentUser]);
+  });
 
   const handleDeleteBtnClick = () => {
     if (tasksToDelete.length > 0) {
-      ipcRenderer.send("deleteTask", tasksToDelete);
+      ipcRenderer.send("deleteTask", tasksToDelete, currentUser?.uid);
     }
   };
 

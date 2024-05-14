@@ -5,10 +5,12 @@ import '../Data/firebase'; // Assuming your Firebase config is here
 import Header from './Header';
 import TaskManager from './TaskManager';
 import Footer from './Footer';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Import React Router DOM
-import SignIn from './Signin'; // Assuming your SignIn component path
+import {HashRouter,Route, Routes} from 'react-router-dom';
+// import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Import React Router DOM
+import Login from './Auth/Login';
 import Loading from './Loading';
 import { AuthProvider, useAuth } from '../AuthContext/index';
+import Register from './Auth/Register';
 
 export default function App() {
   const [authState, setAuthState] = useState<true | false | null>(null); // Use boolean for authentication state
@@ -34,7 +36,7 @@ export default function App() {
   return (
 
       <AuthProvider>
-        <Router>
+        <HashRouter>
       <Header />
       {authState === null ? ( // Render Loading if authState is null
         <Loading />
@@ -43,11 +45,12 @@ export default function App() {
           {authState ? ( // Check authentication state
             <Route path="/" element={<><TaskManager /> <Footer /></> } /> // Render TaskManager if authenticated
           ) : ( // If not authenticated
-            <Route path="/*" element={<SignIn /> } /> // Render SignIn for all routes
+            <Route path="/*" element={<Login /> } /> // Render SignIn for all routes
           )}
+          <Route path="/register" element={<Register /> } /> 
         </Routes>
       )}
-      </Router>
+      </HashRouter>
       </AuthProvider>
 
   );
