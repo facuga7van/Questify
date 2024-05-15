@@ -4,7 +4,6 @@ import "../Styles/TaskList.css";
 import { Task } from "../Data/Interfaces/taskTypes";
 import delImg from "../Assets/Trash.png";
 import editImg from "../Assets/edit.png";
-import divider from "../Assets/divider2.png";
 import { useAuth } from "../AuthContext/index";
 
 
@@ -18,14 +17,12 @@ function TaskList() {
       uid: "",
       displayName: null,
       email: null
-    } },
+    },TaskDate:'' },
   ]);
   const [tasksToDelete, setTasksToDelete] = useState<string[]>([]);
   const [getTasks, setGetTasks] = useState(false);
-  
-  const hasConfirmedTasks = taskList.some(
-    (task) => task.id !== undefined && task.TaskStatus
-  );
+  const [activeTab, setActiveTab] = useState("pending"); 
+
   const [getXp, setGetXp] = useState(false);
   
 
@@ -42,8 +39,12 @@ function TaskList() {
   }
   useEffect(() => {
     const handleShowTasks = (event: IpcRendererEvent, tasks: Task[]) => {
-      setTasks(tasks.reverse());
       setGetTasks(false);
+      const sortedTasks = tasks.sort(
+        (a, b) => new Date(b.TaskDate.seconds * 1000).getTime() - new Date(a.TaskDate.seconds * 1000).getTime()
+      );
+      setTasks(sortedTasks);
+
       if (1 > 2) {
         console.log(event);
       }
@@ -205,7 +206,24 @@ function TaskList() {
         id="taskList"
         className="w-full items-center mx-auto space-y-2 max-w-lg"
       >
-        {taskList
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === "pending" ? "active" : ""}`}
+            onClick={() => setActiveTab("pending")}
+          >
+            <a>Pendientes</a>
+          </button>
+          <button
+            className={`tab ${activeTab === "completed" ? "active" : ""}`}
+            onClick={() => setActiveTab("completed")}
+          >
+            <a>Completadas</a>
+          </button>
+        </div>
+
+        {activeTab === "pending" && (
+        <>
+          {taskList
           .filter((task) => task.id !== undefined && !task.TaskStatus)
           .map((task, index) => (
             <div className="taskContainer" key={index}>
@@ -253,12 +271,13 @@ function TaskList() {
               </div>
             </div>
           ))}
-        {hasConfirmedTasks && (
-          <div className="divider">
-            <img src={divider} className="dividerImg" alt="Divider"></img>
-          </div>
-        )}
-        {taskList
+          
+        </>
+      )}
+        
+        {activeTab === "completed" && (
+        <>
+          {taskList
           .filter((task) => task.id !== undefined && task.TaskStatus)
           .map((task, index) => (
             <div className="taskContainerFinished" key={index}>
@@ -281,6 +300,9 @@ function TaskList() {
               </div>
             </div>
           ))}
+        </>
+      )}
+        
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ export interface Task {
     TaskStatus: any;
     TaskDiff: number;
     TaskUser:User;
+    TaskDate: any;
   }
 
   export interface TaskListProps {

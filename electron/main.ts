@@ -37,6 +37,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 const iconPath = path.join(process.env.VITE_PUBLIC, "icon.png");
  const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY });
 let win: BrowserWindow | null;
+let childWindow: BrowserWindow | null;
 let updateCheck = false;
 let updateFound = false;
 
@@ -64,6 +65,9 @@ function createWindow() {
     } else {
       win.loadFile(path.join(RENDERER_DIST, "index.html"));
     }
+    win.webContents.on('did-finish-load', () => {
+      win?.webContents.send('window-type', 'main');
+    });
   }
 }
 
@@ -83,6 +87,13 @@ app.on("activate", () => {
 ipcMain.on("minimizeApp", () => {
   win?.minimize();
 });
+
+ipcMain.on("openConfig", () => {
+  createConfigWindow();
+});
+ipcMain.on("closeConfig", () => {
+  childWindow?.close();
+});
 ipcMain.on("closeApp", () => {
   let config = readConfig();
   if (config.keepTrayActive) {
@@ -93,10 +104,49 @@ ipcMain.on("closeApp", () => {
 });
 
 //DEV
-   //const configFilePath = path.join(__dirname, './config.json');
+  //  const configFilePath = path.join(__dirname, './config.json');
 //BUILD
    const configFilePath = path.join(app.getPath("userData"), "config.json");
 
+   async function createConfigWindow () { 
+    console.log('open config')
+    if(win){
+      console.log('open config2')
+      childWindow = new BrowserWindow({ 
+        height: 250,  
+        width: 500, 
+        minWidth: 500,
+        minHeight: 250,
+        maxHeight: 250,
+        maxWidth: 500,
+        show: false, 
+        minimizable: false,  
+        maximizable: false, 
+        frame: false,
+        parent: win,  
+        icon: path.join(process.env.VITE_PUBLIC, "../src/Assets/icon.png"),
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          preload: path.join(__dirname, "preload.mjs"),
+        }  
+      });
+      childWindow.removeMenu();
+
+      if (VITE_DEV_SERVER_URL) {
+        childWindow.loadURL(VITE_DEV_SERVER_URL);
+      } else {
+        childWindow.loadFile(path.join(RENDERER_DIST, "index.html"));
+      }
+      childWindow.webContents.on('did-finish-load', () => {
+        childWindow?.webContents.send('window-type', 'child');
+      });
+      childWindow.webContents.on('dom-ready', () => {
+        childWindow?.show();
+      });
+    }
+    
+  } 
 async function getTasks(userId:string) {
 
   try {
@@ -108,12 +158,14 @@ async function getTasks(userId:string) {
       id: doc.id,
       ...doc.data(),
     }));
+    console.log(tasks)
     return tasks;
   } catch (error) {
     console.error("Error getting tasks:", error);
     return []; // Return empty array on error
   }
 }
+
 async function getTaskById(userId: string, id: string) {
   try {
     const taskDocRef = doc(collection(db, "questify", userId, "tasks"), id);
@@ -232,6 +284,30 @@ async function findDifficulty(task: Task) {
 
   return completion.choices[0].message.content;
 }
+
+ipcMain.on("getConfig", async(event: Electron.IpcMainEvent) =>{
+  try {
+    const config = await readConfig();
+    event.reply("sendConfig", config);
+  } catch (error) {
+    console.error("Connection refused:", error);
+    event.reply("config-error", (error as Error).message); // Send error message
+  }
+})
+
+ipcMain.on("setConfig", async(event: Electron.IpcMainEvent, settingName: string, newValue: boolean) =>{
+  try {
+    console.log('hola ' + settingName + ' ' + newValue)
+    const config = await readConfig();
+    config[settingName] = newValue;
+    console.log(config)
+    fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+    win?.setAlwaysOnTop(config.keepOnTop, "screen-saver", 1);
+  } catch (error) {
+    console.error("Connection refused:", error);
+    event.reply("config-error", (error as Error).message); // Send error message
+  }
+})
 
 ipcMain.on("getXP", async (event: Electron.IpcMainEvent, userId:string) => {
   try {
@@ -381,6 +457,7 @@ app.whenReady().then( async() => {
       });
 
       let config = readConfig();
+      win?.setAlwaysOnTop(config.keepOnTop, "screen-saver", 1);
       const version = app.getVersion();
 
       let template: MenuItemConstructorOptions[] = [

@@ -3,8 +3,9 @@
   min-height: 25vh;
   overflow-y: auto;
   background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+  border: 1px solid #795649;
+  border-radius: 2px;
+  box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.3);
 }
 
 #taskList::-webkit-scrollbar {
@@ -18,7 +19,36 @@
   border-radius: 10px;
 }
 
-/* Tarea */
+/* TABS */
+.tabs{
+  text-align: center;
+  display: flex;
+  justify-content: space-around;
+  margin: 1rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.tabs button{
+  border-bottom: 2px solid #795649;
+  width: 30%;
+  transition: all 0.3s ease;
+}
+.tabs a{
+  opacity: 0.7;
+}
+.tabs button:hover{
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
+}
+
+.tabs .tab.active {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
+}
+
+
+/* QUESTS */
 .taskNameCont{
   display: flex;
 }

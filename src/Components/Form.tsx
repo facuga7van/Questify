@@ -8,6 +8,7 @@ import { Task } from '../Data/Interfaces/taskTypes';
 import { useAuth } from '@/AuthContext';
 import {Howl, Howler} from 'howler';
 import write from '../Assets/FX/write.mp3';
+import joaco from '../Assets/FX/graciastio.mp3';
 
 function Form() {
   const ipcRenderer = (window as any).ipcRenderer;
@@ -18,6 +19,10 @@ function Form() {
   const { currentUser } =  useAuth()
   const writeSound = new Howl({
     src: [write],
+    html5:true
+  });
+  const joacoSound = new Howl({
+    src: [joaco],
     html5:true
   });
   Howler.volume(0.2);
@@ -35,7 +40,6 @@ function Form() {
     if (newTask.TaskName !== '') {
       ipcRenderer.send('addTask', newTask);
       setTaskName('');
-      writeSound.play()
       setTaskDesc('');
       setTaskId('');
       const taskInput = document.getElementById('taskInput');
@@ -47,7 +51,20 @@ function Form() {
 
     }
   };
-  
+  const taskAdded = (event: IpcRendererEvent) => {
+    if (1>2){
+      console.log(event)
+    }
+    if (currentUser?.uid === "7MfCdgHwfgc3MchqqsHKRDvOzkm1" || currentUser?.uid === "XkIjCIHs7xPLL3neZsMpFBBCeaG2" ){
+      joacoSound.play()
+    }else{
+      writeSound.play()
+    }
+    
+  }
+  useEffect(() =>{
+    ipcRenderer.on("taskAdded", taskAdded);
+  },[])
   const handleEditTask = (event: IpcRendererEvent,task: Task) => {
     setTaskName(task.TaskName || ''); // Set empty string if TaskName is missing
     setTaskDesc(task.TaskDesc || ''); // Set empty string if TaskDesc is missing
