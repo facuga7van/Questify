@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import titleLeft from '../Assets/titleLeft.png';
 import titleRight from '../Assets/titleRight.png';
 import type { IpcRendererEvent } from '../../electron/preload';
@@ -6,6 +6,8 @@ import divider from '../Assets/divider.png';
 import '../Styles/Form.css';
 import { Task } from '../Data/Interfaces/taskTypes';
 import { useAuth } from '@/AuthContext';
+import {Howl, Howler} from 'howler';
+import write from '../Assets/FX/write.mp3';
 
 function Form() {
   const ipcRenderer = (window as any).ipcRenderer;
@@ -14,6 +16,11 @@ function Form() {
   const [taskId, setTaskId] = useState('');
   const [isEdit, setIsEdit] = useState(false); 
   const { currentUser } =  useAuth()
+  const writeSound = new Howl({
+    src: [write],
+    html5:true
+  });
+  Howler.volume(0.2);
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -24,12 +31,11 @@ function Form() {
       TaskStatus: false,
       TaskUser: currentUser?.uid
     };
-
+    
     if (newTask.TaskName !== '') {
-      console.log('se agrega')
-      console.log(newTask)
       ipcRenderer.send('addTask', newTask);
       setTaskName('');
+      writeSound.play()
       setTaskDesc('');
       setTaskId('');
       const taskInput = document.getElementById('taskInput');
@@ -46,18 +52,14 @@ function Form() {
     setTaskName(task.TaskName || ''); // Set empty string if TaskName is missing
     setTaskDesc(task.TaskDesc || ''); // Set empty string if TaskDesc is missing
     setTaskId(task.id || ''); // Set empty string if TaskDesc is missing
-    console.log('a editar')
-    console.log(task)
     if (1<2){
       console.log(event)
     }
-    ipcRenderer.removeAllListeners('sendTaskEdit');
     setIsEdit(true);
   };
-
-  ipcRenderer.on('sendTaskEdit', handleEditTask);
-
-
+  useEffect(() =>{
+    ipcRenderer.on("sendTaskEdit", handleEditTask);
+  },[])
 
   return (
     <div className='container mx-auto py-4 flex flex-col items-center'>

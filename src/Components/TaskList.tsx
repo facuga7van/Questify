@@ -7,9 +7,12 @@ import editImg from "../Assets/edit.png";
 import divider from "../Assets/divider2.png";
 import { useAuth } from "../AuthContext/index";
 
+
 function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
   const { currentUser } = useAuth();
+  
+
   const [taskList, setTasks] = useState<Task[]>([
     { id: undefined, TaskName: "Loading tasks...", TaskDesc: "", TaskStatus: false,TaskDiff:0,TaskUser:{
       uid: "",
@@ -19,7 +22,7 @@ function TaskList() {
   ]);
   const [tasksToDelete, setTasksToDelete] = useState<string[]>([]);
   const [getTasks, setGetTasks] = useState(false);
-
+  
   const hasConfirmedTasks = taskList.some(
     (task) => task.id !== undefined && task.TaskStatus
   );
@@ -28,6 +31,7 @@ function TaskList() {
 
   useEffect(() => {
     setGetTasks(true);
+    
   }, []);
 
   useEffect(() => {
@@ -38,15 +42,12 @@ function TaskList() {
   }
   useEffect(() => {
     const handleShowTasks = (event: IpcRendererEvent, tasks: Task[]) => {
-      console.log(tasks);
       setTasks(tasks.reverse());
       setGetTasks(false);
       if (1 > 2) {
         console.log(event);
       }
     };
-
-    console.log("getTasks");
     if (getTasks) {
       ipcRenderer.send("getTasks", currentUser?.uid);
     }
@@ -55,7 +56,7 @@ function TaskList() {
     return () => {
       ipcRenderer.removeAllListeners("showTasks", handleShowTasks);
     };
-  });
+  }),[getTasks];
 
   const handleDeleteBtnClick = () => {
     if (tasksToDelete.length > 0) {
@@ -107,7 +108,6 @@ function TaskList() {
   const handleEditBtnClick = async (task: Task) => {
     try {
       await ipcRenderer.send("editTask", task.id, currentUser?.uid); // Await the promise for synchronous behavior
-      console.log("Task edit request sent successfully"); // Optional success message
     } catch (error) {
       console.error("Error sending edit request:", error); // Handle errors gracefully
     }
@@ -115,9 +115,10 @@ function TaskList() {
 
   const handleCompleteBtnClick = async (task: Task) => {
     try {
+      
       await setTasksToDelete(tasksToDelete.filter((id) => id !== task.id));
       await ipcRenderer.send("changeStatusTask", task.id,currentUser?.uid);
-      console.log("Task edit request sent successfully");
+      
     } catch (error) {
       console.error("Error sending edit request:", error);
     }
@@ -125,14 +126,17 @@ function TaskList() {
 
   const handleEditTask = (event: IpcRendererEvent) => {
     setGetTasks(true);
-    if (1 < 2) {
+    if (1 > 2) {
       console.log(event);
     }
-    ipcRenderer.removeAllListeners("taskAdded");
+    
   };
 
-  ipcRenderer.on("taskAdded", handleEditTask);
-
+  useEffect(() =>{
+    ipcRenderer.on("taskAdded", handleEditTask);
+  },[])
+  
+  
   const [xpGained, setXpGained] = useState(0);
   const expAlertRef = useRef<HTMLDivElement>(null);
 

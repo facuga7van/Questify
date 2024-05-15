@@ -93,9 +93,9 @@ ipcMain.on("closeApp", () => {
 });
 
 //DEV
-  const configFilePath = path.join(__dirname, './config.json');
+   //const configFilePath = path.join(__dirname, './config.json');
 //BUILD
-  //const configFilePath = path.join(app.getPath("userData"), "config.json");
+   const configFilePath = path.join(app.getPath("userData"), "config.json");
 
 async function getTasks(userId:string) {
 
@@ -219,7 +219,6 @@ function readConfig() {
 }
 
 async function findDifficulty(task: Task) {
-  console.log(process.env.OPENAI_APIKEY);
   const completion = await openai.chat.completions.create({
     max_tokens: 1,
     messages: [
@@ -261,36 +260,24 @@ ipcMain.on("addTask", async (event, newTask) => {
       console.log(event)
     }
       const userId = newTask.TaskUser;
-      const isok = await addTask(newTask,userId);
-      if (isok){
-        win?.webContents.send("taskAdded");
-      }else{
-        console.error("Connection refused:");
-      }
+      await addTask(newTask,userId);
+      win?.webContents.send("taskAdded");
 
 });
 
 ipcMain.on("deleteTask", async (event, ids, userId) => {
   try {
-    // Validate input
-    
     if (!Array.isArray(ids) || !ids.length) {
       console.error("Invalid ID format. Expected an array of IDs.");
       event.sender.send("deleteTaskError", "Invalid ID format.");
       return;
     }
 
-    // const tasksCollectionRef = collection(db, "questify", userId, "tasks");
     const deletedTasks = [];
 
     for (let id of ids) {
-      
-      // const taskRef = doc(tasksCollectionRef, id);
       const taskDocRef = doc(collection(db, "questify", userId, "tasks"), id);
-      console.log(id)
-      console.log(taskDocRef)
-       await deleteDoc(taskDocRef);
-
+      await deleteDoc(taskDocRef);
       deletedTasks.push(id);
     }
 
@@ -300,33 +287,6 @@ ipcMain.on("deleteTask", async (event, ids, userId) => {
     event.sender.send("deleteTaskError", (error as Error).message);
   }
 });
-  // try {
-  //   const tasks = await getTasks(userId);
-
-  //   if (!Array.isArray(ids)) {
-  //     console.error("Invalid ID format. Expected an array of IDs.");
-  //     event.sender.send("deleteTaskError", "Invalid ID format.");
-  //     return;
-  //   }
-
-  //   const deletedIDs = [];
-
-  //   for (const id of ids) {
-  //     const taskIndex = tasks.findIndex(
-  //       (task: { idTask: any }) => task.idTask === id
-  //     );
-  //     if (taskIndex !== -1) {
-  //       tasks.splice(taskIndex, 1);
-  //       deletedIDs.push(id);
-  //     }
-  //   }
-  //   await saveTasks(tasks);
-  //   event.sender.send("deleteTaskSuccess", deletedIDs);
-  // } catch (error) {
-  //   console.error("Error deleting task:", error);
-  //   event.sender.send("deleteTaskError", (error as Error).message);
-  // }
-// });
 
 ipcMain.on("changeStatusTask", async (event, id, userId ) => {
   try {
@@ -353,8 +313,6 @@ ipcMain.on("changeStatusTask", async (event, id, userId ) => {
 ipcMain.on("editTask", async (event, id,userId) => {
   try{
     const taskToEdit = await getTaskById(userId,id)
-    console.log('editar')
-    console.log(taskToEdit)
     win?.webContents.send("sendTaskEdit", taskToEdit);
   }catch(e){
     if (1>2){
@@ -367,20 +325,12 @@ autoUpdater.on("download-progress", (info) =>{
   win?.webContents.send("checkingUdp", "Installing...");
   console.log("not", info);
 })
-// autoUpdater.on("update-available", (info) => {
-//   win?.webContents.send("checkingUdp", "Update available");
-//   console.log("available", info);
-//   let pth = autoUpdater.downloadUpdate();
-//   win?.webContents.send("checkingUdp", pth);
-// });
+
 autoUpdater.on("update-not-available", (info) => {
   win?.webContents.send("checkingUdp", "");
   console.log("not", info);
 });
-// autoUpdater.on("update-downloaded", (info) => {
-//   win?.webContents.send("checkingUdp", "Installing...");
-//   console.log("checking", info);
-// });
+
 autoUpdater.on("error", (error) => {
   win?.webContents.send("checkingUdp", error);
   console.error("Error during update check:", error);
@@ -389,7 +339,7 @@ autoUpdater.on("error", (error) => {
 autoUpdater.on("update-available", (_event: any) => {
   win?.webContents.send("checkingUdp", "Installing...");
   const dialogOpts = {
-    type: 'info' as const, // Set the type to one of the allowed values
+    type: 'info' as const,
     buttons: ['Ok'],
     title: `Questify Update Available`,
     message: `A new ${autoUpdater.channel} version download started.`,
@@ -420,7 +370,7 @@ app.whenReady().then( async() => {
 
   win?.webContents.on("did-finish-load", async () => {
     if (win) {
-      win.webContents.send("checkingUdp", "Checking for updates");
+      win?.webContents.send("checkingUdp", "Checking for updates");
       
       const tray = new Tray(nativeImage.createFromPath(iconPath));
       tray.setImage(iconPath);

@@ -7,24 +7,18 @@ import Progressbar from './ProgressBar';
 function Footer() {
   const ipcRenderer = (window as any).ipcRenderer;
   
-  useEffect(() => {
-    const showMessage = (event: IpcRendererEvent, message: string) => {
-      const footerWarningElement = document.querySelector('.footerWarning') as Element;
-      if (1<2){
-        console.log(event)
-      }
-    if (footerWarningElement) {
-      footerWarningElement.textContent = message;
+  const showMessage = (event: IpcRendererEvent, message: string) => {
+    const footerWarningElement = document.querySelector('.footerWarning') as Element;
+    if (1>2){
+      console.log(event)
     }
-    };
-    
-    ipcRenderer.on('checkingUdp', showMessage);
+    console.log('upd')
+  if (footerWarningElement) {
+    footerWarningElement.textContent = message;
+  }
+  };
 
-    return () => {
-      ipcRenderer.removeAllListeners('checkingUdp', showMessage);
-    };
-  });
-
+  useEffect(()=>{ipcRenderer.on('checkingUdp', showMessage);},[])
   
  
   return (
