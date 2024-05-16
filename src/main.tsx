@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './Components/App.tsx'
-import './index.css'
-import AppConfig from './Components/AppConfig.tsx'
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import App from './Components/App.tsx';
+import './index.css';
+import AppConfig from './Components/AppConfig.tsx';
+import './Data/i18n.ts';
 
 const AppContainer = () => {
   const [windowType, setWindowType] = useState<string | null>(null);
@@ -10,10 +11,9 @@ const AppContainer = () => {
   useEffect(() => {
     window.ipcRenderer.on('window-type', (_event, type) => {
       setWindowType(type);
-      console.log(type)
+      console.log(type);
     });
     
-    // Cleanup listener on unmount
     return () => {
       window.ipcRenderer.removeAllListeners('window-type');
     };
@@ -26,12 +26,13 @@ const AppContainer = () => {
   return windowType === 'main' ? <App /> : <AppConfig />;
 };
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.render(
   <React.StrictMode>
     <AppContainer />
   </React.StrictMode>,
-)
+  document.getElementById('root')
+);
 
 window.ipcRenderer.on('main-process-message', (_event, message) => {
-  console.log(message)
-})
+  console.log(message);
+});

@@ -1,0 +1,15 @@
+ {
+      "title": "Título",
+      "addQuest": "Agregar Misión",
+      "editQuest": "Editar Misión",
+      "placeholder": "Agregar una nueva misión...",
+      "questDescPlaceholder": "Descripción de la misión",
+      "noClass": "Sin clase",
+      "todo": "Por hacer",
+      "work": "Trabajo",
+      "rutine": "Rutina",
+      "pendings": "Pendientes",
+      "completed": "Completadas",
+      "configuration": "Configuracion"
+    }
+  

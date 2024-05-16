@@ -15,14 +15,17 @@ const Register = () => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const { userLoggedIn } = useAuth();
-  if (1>2){
-    setErrorMessage('a')
-  }
   const onSubmit = async (e: any) => {
     e.preventDefault();
     if (!isRegistering) {
       setIsRegistering(true);
-      await doCreateUserWithEmailAndPassword(email, password);
+      try{
+        await doCreateUserWithEmailAndPassword(email, password);
+      }catch(e){
+        setErrorMessage(`Incorrect password or email. 
+        Password must have at least 6 characters`)
+        setIsRegistering(false)
+      }
     }
   };
 

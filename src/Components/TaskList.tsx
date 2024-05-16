@@ -5,15 +5,17 @@ import { Task } from "../Data/Interfaces/taskTypes";
 import delImg from "../Assets/Trash.png";
 import editImg from "../Assets/edit.png";
 import { useAuth } from "../AuthContext/index";
+import { useTranslation } from 'react-i18next';
+import i18n from "@/Data/i18n";
 
 
 function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
   const { currentUser } = useAuth();
   
-
+  const { t } = useTranslation();
   const [taskList, setTasks] = useState<Task[]>([
-    { id: undefined, TaskName: "Loading tasks...", TaskDesc: "", TaskStatus: false,TaskDiff:0,TaskUser:{
+    { id: undefined, TaskName: "Loading tasks...", TaskDesc: "",TaskDueDate:new Date(0) ,TaskClass:'' , TaskStatus: false,TaskDiff:0,TaskUser:{
       uid: "",
       displayName: null,
       email: null
@@ -77,7 +79,7 @@ function TaskList() {
           maxHeight = windowHeight / 3;
         } else {
           minHeight = windowHeight * 0.15;
-          maxHeight = windowHeight * 0.5;
+          maxHeight = windowHeight * 0.6;
         }
 
         const containerHeight =
@@ -132,10 +134,19 @@ function TaskList() {
     }
     
   };
+  const handleLang = (event: IpcRendererEvent, lang:string) => {
+    i18n.changeLanguage(lang);
+    if (1 > 2) {
+      console.log(event);
+    }
+    
+  };
 
   useEffect(() =>{
     ipcRenderer.on("taskAdded", handleEditTask);
-  },[])
+    console.log('hola')
+    ipcRenderer.on("changeLang", handleLang);
+  })
   
   
   const [xpGained, setXpGained] = useState(0);
@@ -192,35 +203,30 @@ function TaskList() {
 
   return (
     <div>
-      <div className="w-full flex justify-end items-center mx-auto space-y-2 max-w-lg">
-        <div className="DeleteBtn">
-          <img
-            src={delImg}
-            className={tasksToDelete.length > 0 ? "DeleteOn" : "DeleteOff"}
-            onClick={handleDeleteBtnClick}
-          />
-        </div>
-      </div>
+      
 
       <div
         id="taskList"
         className="w-full items-center mx-auto space-y-2 max-w-lg"
       >
+        <div className="tabsCont">
         <div className="tabs">
           <button
             className={`tab ${activeTab === "pending" ? "active" : ""}`}
             onClick={() => setActiveTab("pending")}
           >
-            <a>Pendientes</a>
+            <a>{t('pendings')}</a>
           </button>
           <button
             className={`tab ${activeTab === "completed" ? "active" : ""}`}
             onClick={() => setActiveTab("completed")}
           >
-            <a>Completadas</a>
+            <a>{t('completed')}</a>
           </button>
         </div>
-
+        </div>
+        
+       
         {activeTab === "pending" && (
         <>
           {taskList
@@ -303,6 +309,15 @@ function TaskList() {
         </>
       )}
         
+      </div>
+      <div className="w-full flex justify-end items-center mx-auto space-y-2 max-w-lg">
+        <div className="DeleteBtn">
+          <img
+            src={delImg}
+            className={tasksToDelete.length > 0 ? "DeleteOn" : "DeleteOff"}
+            onClick={handleDeleteBtnClick}
+          />
+        </div>
       </div>
     </div>
   );

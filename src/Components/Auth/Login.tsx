@@ -17,10 +17,11 @@ const Login = () => {
     e.preventDefault();
     if (!isSigningIn) {
       setIsSigningIn(true);
-      await doSignInWithEmailAndPassword(email, password);
-      // doSendEmailVerification()
-      if (1>2){
-        setErrorMessage('a')
+      try{
+        await doSignInWithEmailAndPassword(email, password);
+      }catch(e){
+        setErrorMessage('Incorrect password or email')
+        setIsSigningIn(false)
       }
     }
   };

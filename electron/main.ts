@@ -91,9 +91,11 @@ ipcMain.on("minimizeApp", () => {
 ipcMain.on("openConfig", () => {
   createConfigWindow();
 });
+
 ipcMain.on("closeConfig", () => {
   childWindow?.close();
 });
+
 ipcMain.on("closeApp", () => {
   let config = readConfig();
   if (config.keepTrayActive) {
@@ -158,7 +160,7 @@ async function getTasks(userId:string) {
       id: doc.id,
       ...doc.data(),
     }));
-    console.log(tasks)
+    
     return tasks;
   } catch (error) {
     console.error("Error getting tasks:", error);
@@ -188,33 +190,38 @@ async function getTaskById(userId: string, id: string) {
 async function addTask(task:any,userId:any){
   
   if (task.id){
-    console.log('actualzio')
+    console.log(task)
       try {
         await setDoc(doc(db, "questify", userId, "tasks",task.id), {
           TaskName: task.TaskName,
           TaskDesc: task.TaskDesc,
           TaskDiff: task.TaskDiff,
           TaskStatus: task.TaskStatus,
-          TaskDate: serverTimestamp()
+          TaskDate: serverTimestamp(),
+          TaskClass: task.TaskClass,
+          TaskDueDate: task.TaskDueDate
       });
         return true;
     } catch (e) {
-      
+      console.log(e)
     return false;
     }
   }else{
     console.log('agrego')
+    console.log(task)
     try {
       await addDoc(collection(db, "questify", userId, "tasks"), {
         TaskName: task.TaskName,
         TaskDesc: task.TaskDesc,
         TaskDiff: task.TaskDiff,
         TaskStatus: task.TaskStatus,
-        TaskDate: serverTimestamp()
+        TaskDate: serverTimestamp(),
+        TaskClass: task.TaskClass,
+        TaskDueDate: task.TaskDueDate
     });
       return true;
   } catch (e) {
-    
+    console.log(e)
   return false;
   }
 
@@ -297,12 +304,15 @@ ipcMain.on("getConfig", async(event: Electron.IpcMainEvent) =>{
 
 ipcMain.on("setConfig", async(event: Electron.IpcMainEvent, settingName: string, newValue: boolean) =>{
   try {
-    console.log('hola ' + settingName + ' ' + newValue)
     const config = await readConfig();
     config[settingName] = newValue;
     console.log(config)
     fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
     win?.setAlwaysOnTop(config.keepOnTop, "screen-saver", 1);
+    if(settingName === 'language'){
+      win?.webContents.send("changeLang", newValue);
+    }
+    
   } catch (error) {
     console.error("Connection refused:", error);
     event.reply("config-error", (error as Error).message); // Send error message
@@ -336,8 +346,13 @@ ipcMain.on("addTask", async (event, newTask) => {
       console.log(event)
     }
       const userId = newTask.TaskUser;
-      await addTask(newTask,userId);
-      win?.webContents.send("taskAdded");
+      try{
+        await addTask(newTask,userId);
+        win?.webContents.send("taskAdded");
+      }catch(e){
+        console.log(e)
+      }
+      
 
 });
 

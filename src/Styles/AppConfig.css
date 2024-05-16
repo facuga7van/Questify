@@ -93,6 +93,13 @@
 .settings-option input[type="checkbox"] {
   margin-right: 5px;
 }
+.settings-option select{
+  background-color: rgba(0, 0, 0, 0.2);
+  user-select: none;
+    color: white;
+    outline: none;
+
+}
 
 .checkbox-wrapper-2 .ikxBAC {
   appearance: none;

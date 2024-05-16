@@ -5,6 +5,8 @@ export interface Task {
     TaskStatus: any;
     TaskDiff: number;
     TaskUser:User;
+    TaskDueDate:Date;
+    TaskClass:string;
     TaskDate: any;
   }
 

@@ -1,5 +1,5 @@
 #taskList {
-  max-height: 60vh;
+  max-height: 70vh;
   min-height: 25vh;
   overflow-y: auto;
   background-color: rgba(0, 0, 0, 0.15);
@@ -8,45 +8,46 @@
   box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.3);
 }
 
-#taskList::-webkit-scrollbar {
-  background-color: rgba(0, 0, 0, 0);
-  width: 5px;
-  margin-right: 2px;
-}
 
-#taskList::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-}
 
 /* TABS */
+.tabsCont{
+  position: sticky;
+  top: 0;
+  background-image: url("../Assets/bg.jpg");
+  background-size: 40rem 40rem;
+  background-position: center;
+  background-repeat: repeat;
+  background-attachment: fixed; /* Fija el fondo en su posición */
+}
 .tabs{
   text-align: center;
   display: flex;
   justify-content: space-around;
-  margin: 1rem;
+  background-color: rgba(0, 0, 0, 0.15);
   font-size: 1.2rem;
   font-weight: bold;
+  height: 2.5rem;
 }
 
 .tabs button{
+ 
   border-bottom: 2px solid #795649;
   width: 30%;
   transition: all 0.3s ease;
+  
 }
 .tabs a{
   opacity: 0.7;
 }
 .tabs button:hover{
-  transform: scale(1.05);
   filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
 }
 
 .tabs .tab.active {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(3px 3px 4px rgba(0, 0, 0, 0.5)) ;
+  border-bottom: 2px solid #795649;
 }
-
 
 /* QUESTS */
 .taskNameCont{
@@ -115,7 +116,6 @@
   max-width: 90%;
   overflow-wrap: break-word;
   font-family: 'Crimson Pro';
-  opacity: 0.85;
   margin-left: 1rem;
   flex-wrap: wrap;
   overflow: hidden;
@@ -144,7 +144,6 @@
 .editBtn {
   width: 1.3rem;
   height: 1.3rem;
-  opacity: 0.6;
 }
 
 .checkDelete,
@@ -159,7 +158,6 @@
 
 .taskCheck {
   background-image: url("../Assets/Check.png");
-  opacity: 0.5;
   width: 1rem;
   height: 1rem;
   background-size: contain;

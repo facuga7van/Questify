@@ -7,7 +7,7 @@
     margin-top: 8vh;
     color: rgba(0, 0, 0, 70%);
   }
-  #taskInput, #descInput {
+  #taskInput, #descInput, #dueDateInput, #classInput {
     background-color: rgba(0, 0, 0, 0.2);
     color: white;
   }
@@ -18,7 +18,6 @@
   #taskInput::placeholder, #descInput::placeholder {
     color: rgba(255, 255, 255, 0.5);
   }
-
   .needed{
     border: 1px solid rgba(255, 0, 0, 0.4);
     box-shadow: 0px 0px 20px rgba(255, 0, 0, 0.2) ;
@@ -31,7 +30,110 @@
     width: 6rem;
     height: 100%;
   }
+  .dobleInput{
+    display: flex;
+    justify-content: space-between;
+    height: 2.5rem;
+  }
+  .halfInput{
+    width: 47%;
+    
+  }
+  .fullInput{
+    width: 100%;
+  }
+  .dateInput{
+    width: 100%;
+    
+  }
+  .checkbox-wrapper-3 input[type="checkbox"] {
+    visibility: hidden;
+    display: none;
+  }
+  .flexRow {
+    display: flex;
+    flex-direction: row-reverse;
+    margin-bottom: 0.5rem;
+  }
+  .checkDate, .extraOptions {
+    overflow: hidden; /* Asegura que los elementos que se desvanecen no sobresalgan */
+    max-height: 0; /* Inicialmente oculto */
+    opacity: 0;
+    transition: all 0.2s ease-out; /* Animación suave de desvanecimiento */
+  }
   
+  .show {
+    max-height: 1000px;
+    opacity: 1; 
+  }
+
+  .checkbox-wrapper-3 .toggle {
+    position: relative;
+    display: block;
+    width: 40px;
+    height: 20px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transform: translate3d(0, 0, 0);
+  }
+  .checkbox-wrapper-3 .toggle:before {
+    content: "";
+    position: relative;
+    top: 3px;
+    left: 3px;
+    width: 34px;
+    height: 14px;
+    display: block;
+    background: #9A9999;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+  }
+  .checkbox-wrapper-3 .toggle span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    display: block;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(154, 153, 153, 0.5);
+    transition: all 0.2s ease;
+  }
+  .checkbox-wrapper-3 .toggle span:before {
+    content: "";
+    position: absolute;
+    display: block;
+    margin: -18px;
+    width: 56px;
+    height: 56px;
+    background: rgba(79, 46, 220, 0.5);
+    border-radius: 50%;
+    transform: scale(0);
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  .checkbox-wrapper-3 #cbx-3:checked + .toggle:before {
+    background: #947ADA;
+  }
+  .checkbox-wrapper-3 #cbx-3:checked + .toggle span {
+    background: #4F2EDC;
+    transform: translateX(20px);
+    transition: all 0.2s cubic-bezier(0.8, 0.4, 0.3, 1.25), background 0.15s ease;
+    box-shadow: 0 3px 8px rgba(79, 46, 220, 0.2);
+  }
+  .checkbox-wrapper-3 #cbx-3:checked + .toggle span:before {
+    transform: scale(1);
+    opacity: 0;
+    transition: all 0.4s ease;
+  }
+  option{
+    background-color: #c0a080;
+  }
+   option:checked { 
+    background: #795649 !important;
+}
   .imageBtn {
     width: 1rem;
     transition: filter 0.3s ease;
@@ -67,7 +169,35 @@
     box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
     transform: translateY(2px); /* Moves the button down to simulate a press */
   }
-
+  .react-datepicker__header {
+    text-align: center;
+    background-color: #5e4035 !important;
+    border-bottom: 0px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    padding-top: 8px;
+    position: relative;
+  
+  }
+  .react-datepicker {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 0.8rem;
+    background-color: #c0a080 !important;
+    color: #000;
+    border-radius: 0;
+    border: 0px;
+    display: inline-block;
+    box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
+    position: relative;
+  }
+  
+  .react-datepicker__close-icon::before,
+ .react-datepicker__close-icon::after {
+   background-color: transparent !important;
+ }
+  .react-datepicker__time{
+    background-color: #c0a080 !important;
+  }
   @media screen and (max-height: 768px) {
     /* Ajustes para resoluciones menores o iguales a 768px */
     .titleText{
