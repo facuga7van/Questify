@@ -11,6 +11,7 @@ export default function AppConfig() {
   const ipcRenderer = (window as any).ipcRenderer;
   const [isSystemTrayEnabled, setIsSystemTrayEnabled] = useState(false);
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
+  const [language, setLanguage] = useState('');
   const { t } = useTranslation(); 
 
   const closeConfig = () => {
@@ -21,6 +22,7 @@ export default function AppConfig() {
     try {
       setIsSystemTrayEnabled(config.keepTrayActive);
       setIsAlwaysOnTop(config.keepOnTop);
+      setLanguage(config.language)
       if (1 > 2) {
         console.log(event);
       }
@@ -57,6 +59,7 @@ export default function AppConfig() {
   const changeLanguage = (e: { target: { value: any; }; }) => {
     const lang = e.target.value;
     i18n.changeLanguage(lang); // Cambia el idioma de la aplicación
+    setLanguage(lang)
     updateSetting("language", lang); // Update setting on backend
   };
 
@@ -82,9 +85,9 @@ export default function AppConfig() {
             className="sc-gJwTLC ikxBAC"
             checked={isSystemTrayEnabled}
             onChange={handleSystemTrayChange}
-          />{" "}
+          />
         </div>
-        <label htmlFor="theme-toggle">{t('systemTray')}</label> {/* Utiliza la función de traducción para la etiqueta */}
+        <label htmlFor="theme-toggle" title={t('tooltipSystemTray')}>{t('systemTray')}</label> {/* Utiliza la función de traducción para la etiqueta */}
       </div>
       <div className="settings-option">
         <div className="checkbox-wrapper-2">
@@ -93,12 +96,12 @@ export default function AppConfig() {
             className="sc-gJwTLC ikxBAC"
             checked={isAlwaysOnTop}
             onChange={handleAlwaysOnTopChange}
-          />{" "}
+          />
         </div>
-        <label htmlFor="notification-toggle">{t('alwaysOnTop')}</label> {/* Utiliza la función de traducción para la etiqueta */}
+        <label htmlFor="notification-toggle" title={t('tooltipAlwaysOnTopy')}>{t('alwaysOnTop')}</label> {/* Utiliza la función de traducción para la etiqueta */}
       </div>
       <div className="settings-option">
-        <select onChange={changeLanguage}>
+        <select onChange={changeLanguage} value={language}>
           <option value="en">English</option>
           <option value="es">Español</option>
         </select>

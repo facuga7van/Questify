@@ -10,6 +10,10 @@
       "rutine": "Routine",
       "pendings": "Pendings",
       "completed": "Completed",
-      "configuration": "Configuration"
+      "configuration": "Configuration",
+      "systemTray": "System Tray",
+      "alwaysOnTop": "Always On Top",
+      "tooltipSystemTray": "Keep the application in the system tray.",
+      "tooltipAlwaysOnTop": "Keep the window on top of other applications."
     }
   

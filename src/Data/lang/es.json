@@ -10,6 +10,10 @@
       "rutine": "Rutina",
       "pendings": "Pendientes",
       "completed": "Completadas",
-      "configuration": "Configuracion"
+      "configuration": "Configuracion",
+      "systemTray": "Aplicación en segundo plano",
+      "alwaysOnTop": "Aplicación superpuesta",
+      "tooltipSystemTray": "Mantener la aplicacion en la bandeja del sistema.",
+      "tooltipAlwaysOnTopy": "Se establece la ventana superpuesta sobre el resto de aplicaciones."
     }
   

@@ -5,6 +5,9 @@ ipcRenderer.removeAllListeners('deleteTaskSuccess');
 ipcRenderer.removeAllListeners('sendTaskEdit');
 ipcRenderer.removeAllListeners('showTasks');
 ipcRenderer.removeAllListeners('askAdded');
+ipcRenderer.removeAllListeners('syncTasksBeforeQuit');
+ipcRenderer.removeAllListeners('syncTasksBeforeQuitComplete');
+ipcRenderer.removeAllListeners('syncTasksSuccess');
 ipcRenderer.removeAllListeners('sendXP');
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {

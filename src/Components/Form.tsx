@@ -47,7 +47,8 @@ function Form() {
       TaskStatus: false,
       TaskUser: currentUser?.uid,
       TaskClass: taskClass,
-      TaskDueDate: useDate ? taskDueDate : null
+      TaskDueDate: useDate ? taskDueDate : null,
+      TaskOrder: 0
     };
 
     if (newTask.TaskName !== "") {

@@ -8,6 +8,7 @@ export interface Task {
     TaskDueDate:Date;
     TaskClass:string;
     TaskDate: any;
+    TaskOrder:number;
   }
 
   export interface TaskListProps {
