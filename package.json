@@ -3,7 +3,7 @@
   "private": false,
   "description": "Quest book for your daily tasks",
   "author": "Facundo Galvan",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "type": "commonjs",
   "scripts": {
     "start": "electron .",

@@ -15,7 +15,7 @@ import { autoUpdater } from "electron-updater";
 import OpenAI from "openai";
 import { Task } from "../src/Data/Interfaces/taskTypes";
 import dotenv from "dotenv";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
 import {db} from '../src/Data/firebase';
 
 dotenv.config();
@@ -302,6 +302,28 @@ async function findDifficulty(task: Task) {
   console.log(difficulty);
   return difficulty;
 }
+
+ipcMain.on("SyncTasks", async (event: Electron.IpcMainEvent, tasks: Task[],userId:string) => {
+  try {
+    console.log('hola')
+    const batch = writeBatch(db); // Create a write batch
+
+    tasks.forEach((task) => {
+      const taskRef = doc(collection(db, "questify", userId, "tasks"), task.id); // Create a document reference
+
+      batch.update(taskRef, { TaskOrder: task.TaskOrder }); // Update TaskOrder field
+    });
+
+    await batch.commit();
+
+    console.log("Tasks successfully updated in Firestore!");
+    event.sender.send("syncTasksSuccess"); // Send success message to renderer
+  } catch (error) {
+    console.error("Error updating tasks in Firestore:", error);
+  }
+});
+
+
 ipcMain.on("getConfig", async(event: Electron.IpcMainEvent) =>{
   try {
     const config = await readConfig();

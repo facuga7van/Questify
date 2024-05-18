@@ -18,6 +18,9 @@ const { currentUser } = useAuth();
 
 useEffect(() => {
   const handleXPChange = (event: IpcRendererEvent, newXP: number) => {
+    if(1>2){
+      console.log(event);
+    }
     const calculatedLevel = newXP / 100;
     setLevel(Math.floor(calculatedLevel));
     const levelPercentage = calculatedLevel - Math.floor(calculatedLevel);
@@ -37,6 +40,9 @@ useEffect(() => {
 useEffect(() => {
   const XPChange = (event: IpcRendererEvent) => {
     setGetXp(true);
+    if(1>2){
+      console.log(event);
+    }
   };
 
   ipcRenderer.on("taskAdded", XPChange);

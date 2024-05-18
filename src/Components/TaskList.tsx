@@ -8,7 +8,7 @@ import { useAuth } from "../AuthContext/index";
 import { useTranslation } from "react-i18next";
 import i18n from "@/Data/i18n";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-
+ 
 function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
   const { currentUser } = useAuth();
@@ -39,7 +39,10 @@ function TaskList() {
   const [activeTab, setActiveTab] = useState("pending");
   const [getXp, setGetXp] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
-  const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<Task[]>(() => {
+    const savedTasks = localStorage.getItem("taskListPnd");
+    return savedTasks ? JSON.parse(savedTasks) : [];
+  });
   
   useEffect(() => {
     setGetTasks(true);
@@ -51,6 +54,12 @@ function TaskList() {
 
   useEffect(() => {
     const handleShowTasks = (event: IpcRendererEvent, tasks: Task[]) => {
+      if(1>2){
+        console.log(event);
+        console.log(getXp);
+        console.log(taskList , setTasks);
+
+      }
       setCompletedTasks(tasks.filter((task) => task.TaskStatus === true));
       console.log(tasks)
       setPendingTasks(tasks.filter((task) => task.TaskStatus === false).sort((a, b) => a.TaskDate - b.TaskDate));
@@ -148,6 +157,9 @@ function TaskList() {
 
   const handleEditTask = async (event: IpcRendererEvent) => {
     setGetTasks(true);
+    if(1>2){
+      console.log(event);
+    }
   };
 
   useEffect(() => {
@@ -159,6 +171,9 @@ function TaskList() {
 
   const handleLang = async (event: IpcRendererEvent, lang: string) => {
     i18n.changeLanguage(lang);
+    if(1>2){
+      console.log(event);
+    }
   };
 
   useEffect(() => {
@@ -174,8 +189,10 @@ function TaskList() {
 
   useEffect(() => {
     const handleXPChange = (event: IpcRendererEvent, newXpGained: number) => {
-      console.log("hola");
-
+      
+      if(1>2){
+        console.log(event);
+      }
       if (typeof newXpGained === "number") {
         setXpGained(newXpGained);
         setGetXp(false);
@@ -230,21 +247,30 @@ function TaskList() {
       localStorage.setItem("taskListPnd", JSON.stringify(updatedTasks));
     }
   };
-  
-  const onDragEnd = (result:any) => {
+
+  const syncTasks = async () => {
+      const tasksToSave = localStorage.getItem("taskListPnd");
+      if (!tasksToSave) {
+        return; 
+      }
+      try {
+        await ipcRenderer.send("SyncTasks", JSON.parse(tasksToSave),currentUser?.uid);
+      } catch (error) {
+        console.error("Error syncing tasks:", error);
+      }
+  };
+
+
+
+  const onDragEnd = async (result: any) => {
     if (!result.destination) return;
-    
-    const updatedTaskList = Array.from(pendingTasks);
-    const [reorderedTask] = updatedTaskList.splice(result.source.index, 1);
-    updatedTaskList.splice(result.destination.index, 0, reorderedTask);
-
-    const updatedTaskListWithOrder = updatedTaskList.map((task, index) => ({
-      ...task,
-      TaskOrder: index,
-    }));
-
-    setPendingTasks(updatedTaskListWithOrder);
-    localStorage.setItem("taskListPnd", JSON.stringify(updatedTaskListWithOrder));
+    const updatedTasks = [...pendingTasks];
+    const [reorderedTask] = updatedTasks.splice(result.source.index, 1);
+    updatedTasks.splice(result.destination.index, 0, reorderedTask);
+    updatedTasks.forEach((task, index) => { task.TaskOrder = index; });
+    setPendingTasks(updatedTasks);
+    localStorage.setItem("taskListPnd", JSON.stringify(updatedTasks));
+    syncTasks();
   };
 
 
@@ -383,3 +409,5 @@ function TaskList() {
 }
 
 export default TaskList;
+
+
