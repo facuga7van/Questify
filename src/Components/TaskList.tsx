@@ -5,9 +5,9 @@ import { Task } from "../Data/Interfaces/taskTypes";
 import delImg from "../Assets/Trash.png";
 import editImg from "../Assets/edit.png";
 import { useAuth } from "../AuthContext/index";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import i18n from "@/Data/i18n";
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
@@ -16,9 +16,22 @@ function TaskList() {
 
   const [taskList, setTasks] = useState<Task[]>(() => {
     const savedTasks = localStorage.getItem("taskList");
-    return savedTasks ? JSON.parse(savedTasks) : [
-      { id: undefined, TaskName: "Loading tasks...", TaskDesc: "", TaskDueDate: new Date(0), TaskClass: '', TaskStatus: false, TaskDiff: 0, TaskUser: { uid: "", displayName: null, email: null }, TaskDate: '', TaskOrder:0 },
-    ];
+    return savedTasks
+      ? JSON.parse(savedTasks)
+      : [
+          {
+            id: undefined,
+            TaskName: "Loading tasks...",
+            TaskDesc: "",
+            TaskDueDate: new Date(0),
+            TaskClass: "",
+            TaskStatus: false,
+            TaskDiff: 0,
+            TaskUser: { uid: "", displayName: null, email: null },
+            TaskDate: "",
+            TaskOrder: 0,
+          },
+        ];
   });
 
   const [tasksToDelete, setTasksToDelete] = useState<string[]>([]);
@@ -28,7 +41,6 @@ function TaskList() {
 
   useEffect(() => {
     setGetTasks(true);
-    
   }, []);
 
   useEffect(() => {
@@ -37,9 +49,9 @@ function TaskList() {
 
   useEffect(() => {
     const handleShowTasks = (event: IpcRendererEvent, tasks: Task[]) => {
-      if(1>2){
-        console.log(event)
-        console.log(getXp)
+      if (1 > 2) {
+        console.log(event);
+        console.log(getXp);
       }
       setGetTasks(false);
       const sortedTasks = tasks.sort((a, b) => a.TaskOrder - b.TaskOrder);
@@ -71,17 +83,13 @@ function TaskList() {
         });
       }
     };
-  
+
     const intervalId = setInterval(syncTasks, 3000);
-  
-    
-  
+
     return () => {
       clearInterval(intervalId);
     };
   }, [taskList, currentUser]);
-  
-  
 
   const handleDeleteBtnClick = () => {
     if (tasksToDelete.length > 0) {
@@ -149,15 +157,15 @@ function TaskList() {
 
   const handleEditTask = (event: IpcRendererEvent) => {
     setGetTasks(true);
-    if(1>2){
-      console.log(event)
+    if (1 > 2) {
+      console.log(event);
     }
   };
 
   const handleLang = (event: IpcRendererEvent, lang: string) => {
     i18n.changeLanguage(lang);
-    if(1>2){
-      console.log(event)
+    if (1 > 2) {
+      console.log(event);
     }
   };
 
@@ -174,8 +182,8 @@ function TaskList() {
       if (newXpGained > 0) {
         setXpGained(newXpGained);
         setGetXp(false);
-        if(1>2){
-          console.log(event)
+        if (1 > 2) {
+          console.log(event);
         }
       } else {
         setXpGained(0);
@@ -195,16 +203,18 @@ function TaskList() {
   useEffect(() => {
     const handleDeleteTaskSuccess = (
       event: IpcRendererEvent,
-      deletedIds: number[]
+      deletedIds: string[]
     ) => {
+      console.log(deletedIds)
+      clearDeletedTaskIds(deletedIds);
       const updatedTaskList = taskList.filter(
         (task) => !deletedIds.includes(task.id || 0)
-        
       );
-      if(1>2){
-        console.log(event)
+      if (1 > 2) {
+        console.log(event);
       }
       setTasks(updatedTaskList);
+      
       setTasksToDelete([]);
     };
 
@@ -218,9 +228,24 @@ function TaskList() {
     };
   }, [taskList]);
 
-   const onDragEnd = (result:any) => {
+  const clearDeletedTaskIds = (deletedIds: string[]) => {
+    const savedTasks = localStorage.getItem("taskList");
+    console.log(savedTasks)
+    if (savedTasks) {
+      let updatedTasks = JSON.parse(savedTasks);
+      updatedTasks = updatedTasks.filter((task: Task) => {
+        // Comprueba si el ID de la tarea está incluido en los IDs eliminados
+        return !deletedIds.some((deletedId) => deletedId === task.id);
+      });
+      console.log(updatedTasks)
+      localStorage.setItem("taskList", JSON.stringify(updatedTasks));
+    }
+  };
+  
+
+  const onDragEnd = (result: any) => {
     if (!result.destination) return;
-    
+
     const updatedTaskList = Array.from(taskList);
     const [reorderedTask] = updatedTaskList.splice(result.source.index, 1);
     updatedTaskList.splice(result.destination.index, 0, reorderedTask);
@@ -233,38 +258,29 @@ function TaskList() {
     setTasks(updatedTaskListWithOrder);
     localStorage.setItem("taskList", JSON.stringify(updatedTaskListWithOrder));
   };
-  
+
   useEffect(() => {
     ipcRenderer.on("syncTasksBeforeQuit", async () => {
       try {
-        // Obtener el estado actual de taskList
         const taskList = localStorage.getItem("taskList");
-        // Guardar el estado actual en localStorage
-        if (taskList){
-          let savedTasks = JSON.parse(taskList) ;
-        
-        
-        console.log(savedTasks);
-        // Sincronizar el estado actualizado de taskList
-        await ipcRenderer.send("syncTasks", savedTasks, currentUser?.uid);
-        const successListener = () => {
-          ipcRenderer.removeAllListeners("syncTasksSuccess");
-          ipcRenderer.send("syncTasksBeforeQuitComplete");
-        };
-        ipcRenderer.on("syncTasksSuccess", successListener);
-        ipcRenderer.removeAllListeners("syncTasksBeforeQuit");
-      }
+        if (taskList) {
+          let savedTasks = JSON.parse(taskList);
+          await ipcRenderer.send("syncTasks", savedTasks, currentUser?.uid);
+          const successListener = () => {
+            ipcRenderer.removeAllListeners("syncTasksSuccess");
+            ipcRenderer.send("syncTasksBeforeQuitComplete");
+          };
+          ipcRenderer.on("syncTasksSuccess", successListener);
+        }
       } catch (error) {
-        console.error("Error while synchronizing tasks before quitting:", error);
+        console.error(
+          "Error while synchronizing tasks before quitting:",
+          error
+        );
       }
     });
-  
-    // Limpiar el listener cuando el componente se desmonta
-    return () => {
-      ipcRenderer.removeAllListeners("syncTasksBeforeQuit");
-    };
   }, []);
-  
+
   return (
     <div>
       <div
@@ -277,13 +293,13 @@ function TaskList() {
               className={`tab ${activeTab === "pending" ? "active" : ""}`}
               onClick={() => setActiveTab("pending")}
             >
-              <a>{t('pendings')}</a>
+              <a>{t("pendings")}</a>
             </button>
             <button
               className={`tab ${activeTab === "completed" ? "active" : ""}`}
               onClick={() => setActiveTab("completed")}
             >
-              <a>{t('completed')}</a>
+              <a>{t("completed")}</a>
             </button>
           </div>
         </div>
