@@ -9,46 +9,42 @@ import { faSignOut } from "@fortawesome/free-solid-svg-icons";
 
 export default function Progressbar() {
   const ipcRenderer = (window as any).ipcRenderer;
-  const [level, setLevel] = useState(0);
-  const navigate = useNavigate();
-  const [filled, setFilled] = useState(0);
-  const [getXp, setGetXp] = useState(false);
-  const { currentUser } = useAuth();
-  useEffect(() => {
-    setGetXp(true);
-    
-  }, []);
+const [level, setLevel] = useState(0);
+const [filled, setFilled] = useState(0);
+const [getXp, setGetXp] = useState(false);
+const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleXPChange = (event: IpcRendererEvent, newXP: number) => {
-      const calculatedLevel = newXP / 100;
-      setLevel(Math.floor(calculatedLevel));
-      const levelPercentage = calculatedLevel - Math.floor(calculatedLevel);
-      // console.log(levelPercentage + ' ' + calculatedLevel)
-      setFilled(levelPercentage * 100);
-      setGetXp(false);
-      ipcRenderer.removeAllListeners("changeXP");
-      ipcRenderer.removeAllListeners("sendXP");
-      if (1 > 2) {
-        console.log(event);
-      }
-    };
+const { currentUser } = useAuth();
 
-    ipcRenderer.send("getXP", currentUser?.uid);
-    ipcRenderer.on("sendXP", handleXPChange);
+useEffect(() => {
+  const handleXPChange = (event: IpcRendererEvent, newXP: number) => {
+    const calculatedLevel = newXP / 100;
+    setLevel(Math.floor(calculatedLevel));
+    const levelPercentage = calculatedLevel - Math.floor(calculatedLevel);
+    setFilled(levelPercentage * 100);
+    setGetXp(false);
+  };
 
-    return () => ipcRenderer.removeAllListeners("changeXP");
-  }, [getXp]);
+  // Request XP on initial render and listen for changes
+  ipcRenderer.send("getXP", currentUser?.uid);
+  ipcRenderer.on("sendXP", handleXPChange);
 
+  // Cleanup function to remove listener on unmount
+  return () => ipcRenderer.removeAllListeners("sendXP", handleXPChange);
+}, [getXp]);
+
+// Handle taskAdded event to trigger XP retrieval (optional)
+useEffect(() => {
   const XPChange = (event: IpcRendererEvent) => {
     setGetXp(true);
-    if (1 > 2) {
-      console.log(event);
-    }
   };
-  useEffect(() =>{
-    ipcRenderer.on("taskAdded", XPChange);
-  },[])
+
+  ipcRenderer.on("taskAdded", XPChange);
+
+  // Cleanup function to remove listener on unmount
+  return () => ipcRenderer.removeAllListeners("taskAdded", XPChange);
+}, []);
+
 
   return (
     <div>

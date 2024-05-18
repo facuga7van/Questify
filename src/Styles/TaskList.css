@@ -148,7 +148,8 @@
 }
 
 .checkDelete,
-.checkFinish {
+.checkFinish,
+.checkFinished {
   display: none;
   cursor: pointer;
 }
@@ -165,11 +166,19 @@
   background-repeat: no-repeat;
   background-position: center center;
 }
-
-.checkFinish:checked+.taskImage {
+.checkFinish{
+  background-image: url("../Assets/QuestHover.png");
+}
+.checkFinished{
+  background-image: url("../Assets/QuestHover.png");
+}
+.checkFinished+.taskImage {
   background-image: url("../Assets/QuestHover.png");
 }
 
+.checkFinished+.taskImage {
+  background-image: url("../Assets/QuestHover.png");
+}
 .checkDelete:checked+.taskCheck {
   background-image: url("../Assets/CheckedOpa.png");
 }

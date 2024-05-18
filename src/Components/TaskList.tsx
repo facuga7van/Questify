@@ -15,7 +15,7 @@ function TaskList() {
   const { t } = useTranslation();
 
   const [taskList, setTasks] = useState<Task[]>(() => {
-    const savedTasks = localStorage.getItem("taskList");
+    const savedTasks = localStorage.getItem("taskListPnd");
     return savedTasks
       ? JSON.parse(savedTasks)
       : [
@@ -38,7 +38,9 @@ function TaskList() {
   const [getTasks, setGetTasks] = useState(false);
   const [activeTab, setActiveTab] = useState("pending");
   const [getXp, setGetXp] = useState(false);
-
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
+  
   useEffect(() => {
     setGetTasks(true);
   }, []);
@@ -49,47 +51,24 @@ function TaskList() {
 
   useEffect(() => {
     const handleShowTasks = (event: IpcRendererEvent, tasks: Task[]) => {
-      if (1 > 2) {
-        console.log(event);
-        console.log(getXp);
-      }
+      setCompletedTasks(tasks.filter((task) => task.TaskStatus === true));
+      console.log(tasks)
+      setPendingTasks(tasks.filter((task) => task.TaskStatus === false).sort((a, b) => a.TaskDate - b.TaskDate));
+      
+      localStorage.setItem("taskListPnd", JSON.stringify(pendingTasks));
       setGetTasks(false);
-      const sortedTasks = tasks.sort((a, b) => a.TaskOrder - b.TaskOrder);
-      setTasks(sortedTasks);
-      localStorage.setItem("taskList", JSON.stringify(sortedTasks));
     };
+
     if (getTasks) {
       ipcRenderer.send("getTasks", currentUser?.uid);
     }
+
     ipcRenderer.on("showTasks", handleShowTasks);
 
     return () => {
       ipcRenderer.removeAllListeners("showTasks", handleShowTasks);
     };
   }, [getTasks]);
-
-  useEffect(() => {
-    const syncTasks = async () => {
-      if (currentUser) {
-        const currentTasks = [...taskList]; // Guarda el estado actual de taskList
-        return new Promise<void>((resolve) => {
-          ipcRenderer.send("syncTasks", currentTasks, currentUser.uid); // Usa el estado actualizado de taskList
-          const successListener = () => {
-            ipcRenderer.removeAllListeners("syncTasksSuccess");
-            resolve();
-          };
-
-          ipcRenderer.on("syncTasksSuccess", successListener);
-        });
-      }
-    };
-
-    const intervalId = setInterval(syncTasks, 3000);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [taskList, currentUser]);
 
   const handleDeleteBtnClick = () => {
     if (tasksToDelete.length > 0) {
@@ -148,30 +127,46 @@ function TaskList() {
 
   const handleCompleteBtnClick = async (task: Task) => {
     try {
-      await setTasksToDelete(tasksToDelete.filter((id) => id !== task.id));
       await ipcRenderer.send("changeStatusTask", task.id, currentUser?.uid);
+
+      const updatedTasksPnd = pendingTasks;
+      const updatedTasksCnf = completedTasks;
+      task.TaskStatus = !task.TaskStatus;
+      if (!task.TaskStatus) {
+        updatedTasksPnd.push(task);
+        setPendingTasks(updatedTasksPnd);
+        setCompletedTasks(updatedTasksCnf.filter((t) => t.id !== task.id));
+      } else {
+        updatedTasksCnf.push(task);
+        setCompletedTasks(updatedTasksCnf);
+        setPendingTasks(updatedTasksPnd.filter((t) => t.id !== task.id));
+      }
     } catch (error) {
       console.error("Error sending edit request:", error);
     }
   };
 
-  const handleEditTask = (event: IpcRendererEvent) => {
+  const handleEditTask = async (event: IpcRendererEvent) => {
     setGetTasks(true);
-    if (1 > 2) {
-      console.log(event);
-    }
-  };
-
-  const handleLang = (event: IpcRendererEvent, lang: string) => {
-    i18n.changeLanguage(lang);
-    if (1 > 2) {
-      console.log(event);
-    }
   };
 
   useEffect(() => {
     ipcRenderer.on("taskAdded", handleEditTask);
+    return () => {
+      ipcRenderer.removeAllListeners("taskAdded");
+    };
+  }, []);
+
+  const handleLang = async (event: IpcRendererEvent, lang: string) => {
+    i18n.changeLanguage(lang);
+  };
+
+  useEffect(() => {
     ipcRenderer.on("changeLang", handleLang);
+
+    return () => {
+      ipcRenderer.removeAllListeners("changeLang");
+    };
   }, []);
 
   const [xpGained, setXpGained] = useState(0);
@@ -179,42 +174,39 @@ function TaskList() {
 
   useEffect(() => {
     const handleXPChange = (event: IpcRendererEvent, newXpGained: number) => {
-      if (newXpGained > 0) {
+      console.log("hola");
+
+      if (typeof newXpGained === "number") {
         setXpGained(newXpGained);
         setGetXp(false);
-        if (1 > 2) {
-          console.log(event);
-        }
       } else {
-        setXpGained(0);
-        setGetXp(false);
+        console.error("Received invalid XP value:", newXpGained);
       }
-      ipcRenderer.removeAllListeners("changeXP", handleXPChange);
     };
-
     ipcRenderer.on("changeXP", handleXPChange);
-
     const expAlertElement = document.getElementById("expAlert");
     if (expAlertElement && expAlertRef.current) {
       expAlertRef.current.textContent = `+${xpGained}xp`;
     }
-  }, [xpGained]);
+    return () => {
+      ipcRenderer.removeAllListeners("changeXP", handleXPChange);
+    };
+  }, []);
 
   useEffect(() => {
     const handleDeleteTaskSuccess = (
       event: IpcRendererEvent,
       deletedIds: string[]
     ) => {
-      console.log(deletedIds)
       clearDeletedTaskIds(deletedIds);
-      const updatedTaskList = taskList.filter(
+      const updatedTaskList = pendingTasks.filter(
         (task) => !deletedIds.includes(task.id || 0)
       );
       if (1 > 2) {
         console.log(event);
       }
-      setTasks(updatedTaskList);
-      
+      setPendingTasks(updatedTaskList);
+
       setTasksToDelete([]);
     };
 
@@ -226,27 +218,23 @@ function TaskList() {
         handleDeleteTaskSuccess
       );
     };
-  }, [taskList]);
+  }, [pendingTasks]);
 
   const clearDeletedTaskIds = (deletedIds: string[]) => {
-    const savedTasks = localStorage.getItem("taskList");
-    console.log(savedTasks)
+    const savedTasks = localStorage.getItem("taskListPnd");
     if (savedTasks) {
       let updatedTasks = JSON.parse(savedTasks);
       updatedTasks = updatedTasks.filter((task: Task) => {
-        // Comprueba si el ID de la tarea está incluido en los IDs eliminados
         return !deletedIds.some((deletedId) => deletedId === task.id);
       });
-      console.log(updatedTasks)
-      localStorage.setItem("taskList", JSON.stringify(updatedTasks));
+      localStorage.setItem("taskListPnd", JSON.stringify(updatedTasks));
     }
   };
   
-
-  const onDragEnd = (result: any) => {
+  const onDragEnd = (result:any) => {
     if (!result.destination) return;
-
-    const updatedTaskList = Array.from(taskList);
+    
+    const updatedTaskList = Array.from(pendingTasks);
     const [reorderedTask] = updatedTaskList.splice(result.source.index, 1);
     updatedTaskList.splice(result.destination.index, 0, reorderedTask);
 
@@ -255,31 +243,10 @@ function TaskList() {
       TaskOrder: index,
     }));
 
-    setTasks(updatedTaskListWithOrder);
-    localStorage.setItem("taskList", JSON.stringify(updatedTaskListWithOrder));
+    setPendingTasks(updatedTaskListWithOrder);
+    localStorage.setItem("taskListPnd", JSON.stringify(updatedTaskListWithOrder));
   };
 
-  useEffect(() => {
-    ipcRenderer.on("syncTasksBeforeQuit", async () => {
-      try {
-        const taskList = localStorage.getItem("taskList");
-        if (taskList) {
-          let savedTasks = JSON.parse(taskList);
-          await ipcRenderer.send("syncTasks", savedTasks, currentUser?.uid);
-          const successListener = () => {
-            ipcRenderer.removeAllListeners("syncTasksSuccess");
-            ipcRenderer.send("syncTasksBeforeQuitComplete");
-          };
-          ipcRenderer.on("syncTasksSuccess", successListener);
-        }
-      } catch (error) {
-        console.error(
-          "Error while synchronizing tasks before quitting:",
-          error
-        );
-      }
-    });
-  }, []);
 
   return (
     <div>
@@ -309,71 +276,69 @@ function TaskList() {
             {(provided) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
                 {activeTab === "pending" &&
-                  taskList
-                    .filter((task) => task.id !== undefined && !task.TaskStatus)
-                    .map((task, index) => (
-                      <Draggable
-                        key={task.id}
-                        draggableId={task.id!.toString()}
-                        index={index}
-                      >
-                        {(provided) => (
-                          <div
-                            className="taskContainer"
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                          >
-                            <div className="taskImgCont">
+                  pendingTasks.map((task, index) => (
+                    <Draggable
+                      key={task.id}
+                      draggableId={task.id!.toString()}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          className="taskContainer"
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <div className="taskImgCont">
+                            <label className="imgBtn">
+                              <input
+                                type="checkbox"
+                                // checked={false}
+                                className="checkFinish"
+                                onClick={() => handleCompleteBtnClick(task)}
+                              />
+                              <div className="taskImage"></div>
+                            </label>
+                          </div>
+                          <div className="taskContent">
+                            <span className="taskNameCont group hover:group">
+                              <h1 className="taskName">{task.TaskName}</h1>
+                              <h3 className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                +{7 * task.TaskDiff} xp
+                              </h3>
+                            </span>
+                            <div className="taskDesc">
+                              <h3>{task.TaskDesc}</h3>
+                            </div>
+                          </div>
+                          <div className="taskControls">
+                            <div className="taskCheckCont">
+                              <img
+                                src={editImg}
+                                className="imgBtn editBtn"
+                                onClick={() => handleEditBtnClick(task)}
+                              />
+                            </div>
+                            <div className="taskCheckCont">
                               <label className="imgBtn">
                                 <input
                                   type="checkbox"
-                                  checked={false}
-                                  className="checkFinish"
-                                  onClick={() => handleCompleteBtnClick(task)}
+                                  className="checkDelete"
+                                  onChange={(event) =>
+                                    handleCheckDeleteChange(event, task)
+                                  }
+                                  // checked={tasksToDelete.includes(
+                                  //   task.id || 0
+                                  // )}
                                 />
-                                <div className="taskImage"></div>
+                                <div className="taskCheck"></div>
                               </label>
                             </div>
-                            <div className="taskContent">
-                              <span className="taskNameCont group hover:group">
-                                <h1 className="taskName">{task.TaskName}</h1>
-                                <h3 className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                  +{7 * task.TaskDiff} xp
-                                </h3>
-                              </span>
-                              <div className="taskDesc">
-                                <h3>{task.TaskDesc}</h3>
-                              </div>
-                            </div>
-                            <div className="taskControls">
-                              <div className="taskCheckCont">
-                                <img
-                                  src={editImg}
-                                  className="imgBtn editBtn"
-                                  onClick={() => handleEditBtnClick(task)}
-                                />
-                              </div>
-                              <div className="taskCheckCont">
-                                <label className="imgBtn">
-                                  <input
-                                    type="checkbox"
-                                    className="checkDelete"
-                                    onChange={(event) =>
-                                      handleCheckDeleteChange(event, task)
-                                    }
-                                    checked={tasksToDelete.includes(
-                                      task.id || 0
-                                    )}
-                                  />
-                                  <div className="taskCheck"></div>
-                                </label>
-                              </div>
-                            </div>
                           </div>
-                        )}
-                      </Draggable>
-                    ))}
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
                 {provided.placeholder}
               </div>
             )}
@@ -381,29 +346,27 @@ function TaskList() {
         </DragDropContext>
 
         {activeTab === "completed" &&
-          taskList
-            .filter((task) => task.id !== undefined && task.TaskStatus)
-            .map((task, index) => (
-              <div className="taskContainerFinished" key={index}>
-                <div className="taskImgCont">
-                  <label className="imgBtn">
-                    <input
-                      type="checkbox"
-                      checked={true}
-                      className="checkFinish"
-                      onClick={() => handleCompleteBtnClick(task)}
-                    />
-                    <div className="taskImage"></div>
-                  </label>
-                </div>
-                <div className="taskContent">
-                  <h1 className="taskName">{task.TaskName}</h1>
-                  <div className="taskDesc">
-                    <h3>{task.TaskDesc}</h3>
-                  </div>
+          completedTasks.map((task, index) => (
+            <div className="taskContainerFinished" key={index}>
+              <div className="taskImgCont">
+                <label className="imgBtn">
+                  <input
+                    type="checkbox"
+                    // checked={true}
+                    className="checkFinished"
+                    onClick={() => handleCompleteBtnClick(task)}
+                  />
+                  <div className="taskImage"></div>
+                </label>
+              </div>
+              <div className="taskContent">
+                <h1 className="taskName">{task.TaskName}</h1>
+                <div className="taskDesc">
+                  <h3>{task.TaskDesc}</h3>
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
       </div>
 
       <div className="w-full flex justify-end items-center mx-auto space-y-2 max-w-lg">

@@ -15,7 +15,7 @@ import { autoUpdater } from "electron-updater";
 import OpenAI from "openai";
 import { Task } from "../src/Data/Interfaces/taskTypes";
 import dotenv from "dotenv";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc } from "firebase/firestore";
 import {db} from '../src/Data/firebase';
 
 dotenv.config();
@@ -97,17 +97,12 @@ ipcMain.on("closeConfig", () => {
 });
 
 ipcMain.on("closeApp", async () => {
-  win?.webContents.send("syncTasksBeforeQuit");
-  console.log('cerrando')
   let config = readConfig();
   if (config.keepTrayActive) {
     win?.hide();
   } else {
-    ipcMain.on("syncTasksBeforeQuitComplete", () => {
-      ipcMain.removeAllListeners("syncTasksBeforeQuitComplete");
-      console.log('cerro')
       win?.close();
-    });
+
   }
 });
 
@@ -160,7 +155,7 @@ async function getTasks(userId:string) {
 
   try {
     const tasksCollectionRef = collection(db, "questify", userId, "tasks");
-    const q = query(tasksCollectionRef); // Filter by userId
+    const q = query(tasksCollectionRef, orderBy("TaskDate","desc")); // Filter by userId
 
     const querySnapshot = await getDocs(q);
     const tasks = querySnapshot.docs.map((doc) => ({
@@ -354,19 +349,6 @@ ipcMain.on("getTasks", async (event: Electron.IpcMainEvent, userId:string) => {
   }
 });
 
-ipcMain.on('syncTasks', async (event, tasks, userId) => {
-  try {
-    const tasksCollectionRef = collection(db, "questify", userId, "tasks");
-    for (const task of tasks) {
-      const taskDocRef = doc(tasksCollectionRef, task.id.toString());
-      await setDoc(taskDocRef, task);
-    }
-    event.reply('syncTasksSuccess', tasks);
-  } catch (error) {
-    console.error("Error syncing tasks:", error);
-  }
-});
-
 ipcMain.on("addTask", async (event, newTask) => {
     let rta = Number(await findDifficulty(newTask))
 
@@ -414,6 +396,7 @@ ipcMain.on("changeStatusTask", async (event, id, userId ) => {
     if (taskToUpd){
       taskToUpd.id = id;
       taskToUpd.TaskStatus = !taskToUpd.TaskStatus;
+      taskToUpd.TaskOrder = 0;
     let xpToAdd = taskToUpd.TaskStatus
     ? taskToUpd.TaskDiff * 7
     : -taskToUpd.TaskDiff * 7;
