@@ -1,8 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { auth } from "../Data/firebase";
-import { User } from "firebase/auth"; // Import User type
-import { GoogleAuthProvider } from "firebase/auth"; // Import GoogleAuthProvider
-import { onAuthStateChanged } from "firebase/auth";
+import { User, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth"; // Import User type
 
 const AuthContext = React.createContext<AuthContextValue>({
   userLoggedIn: false,
@@ -23,6 +21,7 @@ interface AuthContextValue {
 export function useAuth() {
   return useContext(AuthContext);
 }
+
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);

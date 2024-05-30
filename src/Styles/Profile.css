@@ -1,0 +1,88 @@
+.ProfileCont {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 auto;
+    padding: 2rem 2rem 2rem 2rem;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 5px;
+  }
+  .ProfileContInner{
+    width: 80%;
+    max-width: 500px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border: 1px solid #795649;
+    border-radius: 2px;
+    box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.3);
+  
+  }
+  .ProfileHeader{
+    display: flex;
+    justify-content: left;
+  }
+  .profile-header {
+    display: flex;
+    align-items: center;
+
+  }
+  .ProfBtns{
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .backBtn {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    width: 2rem;
+  }
+  
+  .editBtn{
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    width: 1.5rem;
+  }
+
+  .backBtn:hover , .editBtn:hover{
+    transform: scale(1.05);
+transition: all 0.3s ease;
+filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
+  }
+
+  .profTitleText {
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .profile-info h2 {
+    margin-bottom: 1rem;
+    font-size: 2rem;
+  }
+  .profile-info li:first-child {
+    margin-top: 1rem;
+  }
+  
+  .profile-info li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .profile-info .label {
+    font-weight: bold;
+    margin-right: 1rem;
+    width: 70px;
+  }
+  
+  .profile-info .value {
+    flex-grow: 1;
+  }
+  

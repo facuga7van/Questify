@@ -74,9 +74,18 @@
     0 0 5px rgba(183, 2, 255, 0.2), /* Inner white glow */
     0 0 5px rgba(0, 255, 0, 0.9); /* Green outer glow */
 }
-
-
-
+.taskDet1{
+  display: flex;
+  justify-content: space-between;
+}
+.taskDet2{
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+}
+.imgCenter{
+  display: flex;
+  justify-content: space-around;
+  padding-bottom: 0.5rem;
+}
 .taskContainer {
   display: flex;
   align-items: center;
@@ -104,6 +113,7 @@
   justify-content: space-between;
   text-align: left;
   flex-grow: 1;
+  cursor:pointer;
 }
 
 .taskName {

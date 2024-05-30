@@ -14,6 +14,16 @@
       "systemTray": "Aplicación en segundo plano",
       "alwaysOnTop": "Aplicación superpuesta",
       "tooltipSystemTray": "Mantener la aplicacion en la bandeja del sistema.",
-      "tooltipAlwaysOnTopy": "Se establece la ventana superpuesta sobre el resto de aplicaciones."
+      "tooltipAlwaysOnTopy": "Se establece la ventana superpuesta sobre el resto de aplicaciones.",
+      "easy":"Fácil",
+      "medium":"Intermedio",
+      "hard":"Difícil",
+      "user":"Usuario",
+      "emailuser":"Mail o Usuario",
+      "password": "Contraseña",
+      "login": "Iniciar Sesión",
+      "loging":"Iniciando Sesión",
+      "dontsigned":"No tienes una cuenta?",
+      "signup":"Registrarse"
     }
   

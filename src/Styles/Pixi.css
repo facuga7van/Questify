@@ -1,0 +1,9 @@
+.CharCont {
+  overflow: hidden;
+  background-color: #c0a080;
+  border: 3px solid #795649;
+  border-radius: 1.2rem;
+
+  width: 106px;
+  height: 106px;
+}

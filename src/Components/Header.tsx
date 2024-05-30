@@ -1,33 +1,21 @@
-import minimizeIcon from '../Assets/minimize2.png';
-import closeIcon from '../Assets/close2.png';
-import configIcon from '../Assets/config.png'
-import '../Styles/Header.css';
-
-
+import minimizeIcon from "../Assets/minimize2.png";
+import closeIcon from "../Assets/close2.png";
+import "../Styles/Header.css";
 
 function Header() {
   const ipcRenderer = (window as any).ipcRenderer;
 
   const minimizeApp = () => {
-    ipcRenderer.send('minimizeApp');
+    ipcRenderer.send("minimizeApp");
   };
-  const openConfig = () => {
-    ipcRenderer.send('openConfig');
-  };
-
   const closeApp = () => {
-    ipcRenderer.send('closeApp');
+    ipcRenderer.send("closeApp");
   };
 
   return (
     <div className="custom-titlebar">
       <div className="titlebar draggable"></div>
       <div className="buttons">
-      <div className="btnBox">
-          <button className="configBtn" onClick={openConfig}>
-            <img src={configIcon} alt="Configuration" className="imageBtn mx-2" />
-          </button>
-        </div>
         <div className="btnBox">
           <button className="minimizeBtn" onClick={minimizeApp}>
             <img src={minimizeIcon} alt="Minimize" className="imageBtn mx-2" />

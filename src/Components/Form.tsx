@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import titleLeft from "../Assets/titleLeft.png";
 import titleRight from "../Assets/titleRight.png";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import type { IpcRendererEvent } from "../../electron/preload";
 import divider from "../Assets/divider.png";
 import "../Styles/Form.css";
@@ -27,7 +27,6 @@ function Form() {
 
   const { t } = useTranslation();
   const { currentUser } = useAuth();
-
   const writeSound = new Howl({
     src: [write],
     html5: true,
@@ -48,11 +47,10 @@ function Form() {
       TaskUser: currentUser?.uid,
       TaskClass: taskClass,
       TaskDueDate: useDate ? taskDueDate : null,
-      TaskOrder: 0
+      TaskOrder: 0,
     };
 
     if (newTask.TaskName !== "") {
-      
       ipcRenderer.send("addTask", newTask);
       setTaskName("");
       setTaskDesc("");
@@ -81,12 +79,11 @@ function Form() {
       writeSound.play();
     }
   };
-  const handleLang = (event: IpcRendererEvent, lang:string) => {
+  const handleLang = (event: IpcRendererEvent, lang: string) => {
     i18n.changeLanguage(lang);
     if (1 > 2) {
       console.log(event);
     }
-    
   };
 
   useEffect(() => {
@@ -107,16 +104,20 @@ function Form() {
     ipcRenderer.on("sendTaskEdit", handleEditTask);
   }, []);
   return (
-    <div className="container mx-auto py-4 flex flex-col items-center">
-      <div className="titleContainer">
-        <img src={titleLeft} alt="Title Left" className="titleImage mx-2" />
-        <h1 className="titleText">Questify - To Do List</h1>
-        <img src={titleRight} alt="Title Right" className="titleImage mx-2" />
-      </div>
-
-      <div className="formCont w-full max-w-md mb-4">
-
-          <div className={`checkDate flexRow ${showExtraOptions ? 'show' : ''}`}>            <div className="checkbox-wrapper-3">
+    <div className="flex">
+      <div className="container mx-auto py-4 flex flex-col items-center">
+        <div className="titleContainer">
+          <img src={titleLeft} alt="Title Left" className="titleImage mx-2" />
+          <h1 className="titleText">Questify - To Do List</h1>
+          <img src={titleRight} alt="Title Right" className="titleImage mx-2" />
+        </div>
+        
+        <div className="formCont w-full max-w-md mb-4">
+          <div
+            className={`checkDate flexRow ${showExtraOptions ? "show" : ""}`}
+          >
+             
+            <div className="checkbox-wrapper-3">
               <input
                 type="checkbox"
                 id="cbx-3"
@@ -129,50 +130,49 @@ function Form() {
             </div>
           </div>
 
-
-        <form id="taskForm" onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <input
-              type="text"
-              id="taskInput"
-              value={taskName}
-              onChange={(e) => {
-                setTaskName(e.target.value);
-                if (e.target.value !== "") {
-                  setShowExtraOptions(true); // Mostrar opciones extra cuando hay texto en el input
-                } else {
-                  setShowExtraOptions(false); // Ocultar opciones extra cuando el input está vacío
-                }
-              }}
-              className={`w-full px-4 py-2 rounded-md focus:outline-none`}
-              placeholder={t('placeholder')} 
-              autoFocus
-            />
-          </div>
-          <div className={`extraOptions ${showExtraOptions ? 'show' : ''}`}>
-          <div className="mb-4">
+          <form id="taskForm" onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <input
+                type="text"
+                id="taskInput"
+                value={taskName}
+                onChange={(e) => {
+                  setTaskName(e.target.value);
+                  if (e.target.value !== "") {
+                    setShowExtraOptions(true); // Mostrar opciones extra cuando hay texto en el input
+                  } else {
+                    setShowExtraOptions(false); // Ocultar opciones extra cuando el input está vacío
+                  }
+                }}
+                className={`w-full px-4 py-2 rounded-md focus:outline-none`}
+                placeholder={t("placeholder")}
+                autoFocus
+              />
+            </div>
+            <div className={`extraOptions ${showExtraOptions ? "show" : ""}`}>
+              <div className="mb-4">
                 <input
                   id="descInput"
                   value={taskDesc}
                   onChange={(e) => setTaskDesc(e.target.value)}
                   className="w-full px-4 py-2 rounded-md focus:outline-none"
-                  placeholder={t('questDescPlaceholder')} 
+                  placeholder={t("questDescPlaceholder")}
                 />
               </div>
               <div className="mb-4 dobleInput">
-              <div className={useDate ? "halfInput" : "fullInput"}>
-                <select
-                  id="classInput"
-                  value={taskClass}
-                  onChange={(e) => setTaskClass(e.target.value)}
-                  className="w-full px-4 py-2 rounded-md focus:outline-none"
-                >
-                  <option value="">{t('noClass')}</option> {/* Traduce el texto de la opción */}
-                  <option value="todo">{t('todo')}</option> {/* Traduce el texto de la opción */}
-                  <option value="work">{t('work')}</option> {/* Traduce el texto de la opción */}
-                  <option value="rutine">{t('rutine')}</option> {/* Traduce el texto de la opción */}
-                </select>
-              </div>
+                <div className={useDate ? "halfInput" : "fullInput"}>
+                  <select
+                    id="classInput"
+                    value={taskClass}
+                    onChange={(e) => setTaskClass(e.target.value)}
+                    className="w-full px-4 py-2 rounded-md focus:outline-none"
+                  >
+                    <option value="">{t("noClass")}</option> 
+                    <option value="todo">{t("todo")}</option> 
+                    <option value="work">{t("work")}</option> 
+                    <option value="rutine">{t("rutine")}</option> 
+                  </select>
+                </div>
                 {useDate && (
                   <div className="halfInput">
                     <DatePicker
@@ -187,15 +187,16 @@ function Form() {
                     />
                   </div>
                 )}
-          </div>
-              
               </div>
-          <button type="submit" className="rpgBtn w-full">
-          {isEdit ? t('editQuest') : t('addQuest')} {/* Traduce el texto del botón */}
-          </button>
-        </form>
+            </div>
+            <button type="submit" className="rpgBtn w-full">
+              {isEdit ? t("editQuest") : t("addQuest")} 
+            </button>
+          </form>
+        </div>
+        <img src={divider} className="dividerImg" alt="Divider"></img>
       </div>
-      <img src={divider} className="dividerImg" alt="Divider"></img>
+      
     </div>
   );
 }

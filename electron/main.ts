@@ -155,7 +155,7 @@ async function getTasks(userId:string) {
 
   try {
     const tasksCollectionRef = collection(db, "questify", userId, "tasks");
-    const q = query(tasksCollectionRef, orderBy("TaskDate","desc")); // Filter by userId
+    const q = query(tasksCollectionRef, orderBy("TaskOrder","asc")); // Filter by userId
 
     const querySnapshot = await getDocs(q);
     const tasks = querySnapshot.docs.map((doc) => ({
@@ -211,7 +211,7 @@ async function addTask(task:any,userId:any){
     }
   }else{
     console.log('agrego')
-    console.log(task)
+    console.log(task.TaskDueDate)
     try {
       await addDoc(collection(db, "questify", userId, "tasks"), {
         TaskName: task.TaskName,
@@ -254,6 +254,26 @@ async function getXp(userId: string): Promise<number> {
     return 0; // Return 0 on any other error
   }
 }
+async function getCharacter(userId: string): Promise<Array<any>> {
+  try {
+    const userRef = doc(collection(db, "questify"), userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      if (userData && userData.characterData) {
+        return userData.characterData; // Devuelve los datos del personaje del usuario si existen
+      } 
+    } 
+
+    // Si no se encuentra ningún dato de personaje, devuelve un array vacío
+    return [];
+  } catch (error) {
+    console.error("Error getting user XP:", error);
+    // En caso de error, devuelve un array vacío o maneja el error de otra manera según lo necesites
+    return [];
+  }
+}
 
 
 async function addXp(newXp: number, userId:string) {
@@ -282,6 +302,26 @@ function readConfig() {
   }
 }
 
+async function setSignup(userId: string, email: string, userName: string): Promise<number | void> {
+  try {
+    const userRef = doc(collection(db, "questify"), userId);
+    await setDoc(userRef, { currentXp: 1, Email: email, UserName: userName }, { merge: true });
+    return 1;
+  } catch (error) {
+    console.error("Error signing up:", error);
+  }
+}
+
+async function setChar(userId: string, charData: any): Promise<number | void> {
+  try {
+    const userRef = doc(collection(db, "questify"), userId);
+    await setDoc(userRef, { characterData: charData }, { merge: true });
+    return 1;
+  } catch (error) {
+    console.error("Error setting character data:", error);
+  }
+}
+
 async function findDifficulty(task: Task) {
   const completion = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
@@ -302,16 +342,69 @@ async function findDifficulty(task: Task) {
   console.log(difficulty);
   return difficulty;
 }
+ipcMain.on("saveChar", async(event: Electron.IpcMainEvent, userId:string,charData:any)=>{
+  try {
+  await setChar(userId,charData);
+  } catch (error) {
+    console.error("Connection refused:", error);
+    event.reply("config-error", (error as Error).message); 
+  }
+})
+
+ipcMain.on("setSignup", async(event: Electron.IpcMainEvent, userId:string, email:string, userName:string)=>{
+  try {
+    const isok = await setSignup(userId,email,userName);
+    event.reply("SignedUp", isok);
+  } catch (error) {
+    console.error("Connection refused:", error);
+    event.reply("config-error", (error as Error).message); 
+  }
+})
+
+ipcMain.on("getCharacter", async (event: Electron.IpcMainEvent, userId:string) => {
+  try {
+    const charData = await getCharacter(userId);
+    event.reply("sendCharData", charData);
+  } catch (error) {
+    console.error("Connection refused:", error);
+    event.reply("charData-error", (error as Error).message); // Send error message
+  }
+});
+
+ipcMain.on("getEmail", async (event: Electron.IpcMainEvent, userName:string) =>{
+  try {
+    const DocRef = doc(collection(db, "questify"), userName);
+    const Snapshot = await getDoc(DocRef);
+
+    if (Snapshot.exists()) {
+      const userData = Snapshot.data();
+      if (userData && userData.email) {
+        return userData.email;
+      } else {
+        console.warn("User data missing 'email' field");
+        return 0;
+      }
+    } else {
+      if(1>2){
+        console.log(event)
+      }
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting task by id:", error);
+    return null;
+  }
+});
 
 ipcMain.on("SyncTasks", async (event: Electron.IpcMainEvent, tasks: Task[],userId:string) => {
   try {
     console.log('hola')
-    const batch = writeBatch(db); // Create a write batch
+    const batch = writeBatch(db); 
 
     tasks.forEach((task) => {
-      const taskRef = doc(collection(db, "questify", userId, "tasks"), task.id); // Create a document reference
+      const taskRef = doc(collection(db, "questify", userId, "tasks"), task.id);
 
-      batch.update(taskRef, { TaskOrder: task.TaskOrder }); // Update TaskOrder field
+      batch.update(taskRef, { TaskOrder: task.TaskOrder });
     });
 
     await batch.commit();

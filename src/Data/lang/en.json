@@ -14,6 +14,16 @@
       "systemTray": "System Tray",
       "alwaysOnTop": "Always On Top",
       "tooltipSystemTray": "Keep the application in the system tray.",
-      "tooltipAlwaysOnTop": "Keep the window on top of other applications."
+      "tooltipAlwaysOnTop": "Keep the window on top of other applications.",
+      "easy":"Easy",
+      "medium":"Medium",
+      "hard":"Hard",
+      "user":"Username",
+      "emailuser":"Email or Username",
+      "password":"Password",
+      "login": "Log In",
+      "loging":"Loging In...",
+      "dontsigned":"Don't have an account?",
+      "signup":"Sign Up"
     }
   

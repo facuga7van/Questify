@@ -8,7 +8,7 @@ import { useAuth } from "../AuthContext/index";
 import { useTranslation } from "react-i18next";
 import i18n from "@/Data/i18n";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
- 
+
 function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
   const { currentUser } = useAuth();
@@ -36,6 +36,7 @@ function TaskList() {
 
   const [tasksToDelete, setTasksToDelete] = useState<string[]>([]);
   const [getTasks, setGetTasks] = useState(false);
+  const [showDetail, setShowDetail] = useState<{ [key: string]: boolean }>({});
   const [activeTab, setActiveTab] = useState("pending");
   const [getXp, setGetXp] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
@@ -43,7 +44,7 @@ function TaskList() {
     const savedTasks = localStorage.getItem("taskListPnd");
     return savedTasks ? JSON.parse(savedTasks) : [];
   });
-  
+
   useEffect(() => {
     setGetTasks(true);
   }, []);
@@ -54,16 +55,19 @@ function TaskList() {
 
   useEffect(() => {
     const handleShowTasks = (event: IpcRendererEvent, tasks: Task[]) => {
-      if(1>2){
+      if (1 > 2) {
         console.log(event);
         console.log(getXp);
-        console.log(taskList , setTasks);
-
+        console.log(taskList, setTasks);
       }
       setCompletedTasks(tasks.filter((task) => task.TaskStatus === true));
-      console.log(tasks)
-      setPendingTasks(tasks.filter((task) => task.TaskStatus === false).sort((a, b) => a.TaskDate - b.TaskDate));
-      
+      console.log(tasks);
+      setPendingTasks(
+        tasks
+          .filter((task) => task.TaskStatus === false)
+          .sort((a, b) => a.TaskDate - b.TaskDate)
+      );
+
       localStorage.setItem("taskListPnd", JSON.stringify(pendingTasks));
       setGetTasks(false);
     };
@@ -84,6 +88,22 @@ function TaskList() {
       ipcRenderer.send("deleteTask", tasksToDelete, currentUser?.uid);
     }
   };
+
+  const formatDate = (date: any): string => {
+    const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+  
+    if (date instanceof Date) {
+      return `${date.toLocaleDateString("es-ES")} ${date.toLocaleTimeString("es-ES", options)}`;
+    } else if (date && date.seconds && typeof date.seconds === 'number') {
+      const milliseconds = date.seconds * 1000 + Math.round(date.nanoseconds / 1000000);
+      const dateObject = new Date(milliseconds);
+      return `${dateObject.toLocaleDateString("es-ES")} ${dateObject.toLocaleTimeString("es-ES", options)}`;
+    } else {
+      return "";
+    }
+  };
+  
+  
 
   useEffect(() => {
     const handleResize = () => {
@@ -157,7 +177,7 @@ function TaskList() {
 
   const handleEditTask = async (event: IpcRendererEvent) => {
     setGetTasks(true);
-    if(1>2){
+    if (1 > 2) {
       console.log(event);
     }
   };
@@ -171,7 +191,7 @@ function TaskList() {
 
   const handleLang = async (event: IpcRendererEvent, lang: string) => {
     i18n.changeLanguage(lang);
-    if(1>2){
+    if (1 > 2) {
       console.log(event);
     }
   };
@@ -189,8 +209,7 @@ function TaskList() {
 
   useEffect(() => {
     const handleXPChange = (event: IpcRendererEvent, newXpGained: number) => {
-      
-      if(1>2){
+      if (1 > 2) {
         console.log(event);
       }
       if (typeof newXpGained === "number") {
@@ -209,7 +228,17 @@ function TaskList() {
       ipcRenderer.removeAllListeners("changeXP", handleXPChange);
     };
   }, []);
-
+  const getTaskDifficultyLabel = (difficulty: number): string => {
+    if (difficulty >= 1 && difficulty <= 4) {
+      return t("easy");
+    } else if (difficulty >= 5 && difficulty <= 7) {
+      return t("medium");
+    } else if (difficulty >= 8 && difficulty <= 10) {
+      return t("hard");
+    } else {
+      return "Unknown"; 
+    }
+  };
   useEffect(() => {
     const handleDeleteTaskSuccess = (
       event: IpcRendererEvent,
@@ -249,30 +278,39 @@ function TaskList() {
   };
 
   const syncTasks = async () => {
-      const tasksToSave = localStorage.getItem("taskListPnd");
-      if (!tasksToSave) {
-        return; 
-      }
-      try {
-        await ipcRenderer.send("SyncTasks", JSON.parse(tasksToSave),currentUser?.uid);
-      } catch (error) {
-        console.error("Error syncing tasks:", error);
-      }
+    const tasksToSave = localStorage.getItem("taskListPnd");
+    if (!tasksToSave) {
+      return;
+    }
+    try {
+      await ipcRenderer.send(
+        "SyncTasks",
+        JSON.parse(tasksToSave),
+        currentUser?.uid
+      );
+    } catch (error) {
+      console.error("Error syncing tasks:", error);
+    }
   };
-
-
 
   const onDragEnd = async (result: any) => {
     if (!result.destination) return;
     const updatedTasks = [...pendingTasks];
     const [reorderedTask] = updatedTasks.splice(result.source.index, 1);
     updatedTasks.splice(result.destination.index, 0, reorderedTask);
-    updatedTasks.forEach((task, index) => { task.TaskOrder = index; });
+    updatedTasks.forEach((task, index) => {
+      task.TaskOrder = index;
+    });
     setPendingTasks(updatedTasks);
     localStorage.setItem("taskListPnd", JSON.stringify(updatedTasks));
     syncTasks();
   };
-
+  const handleDetailClick = (taskId: string) => {
+    setShowDetail((prevState) => ({
+      ...prevState,
+      [taskId]: !prevState[taskId],
+    }));
+  };
 
   return (
     <div>
@@ -319,7 +357,6 @@ function TaskList() {
                             <label className="imgBtn">
                               <input
                                 type="checkbox"
-                                // checked={false}
                                 className="checkFinish"
                                 onClick={() => handleCompleteBtnClick(task)}
                               />
@@ -327,15 +364,37 @@ function TaskList() {
                             </label>
                           </div>
                           <div className="taskContent">
-                            <span className="taskNameCont group hover:group">
+                            <span className="taskNameCont group hover:group" onClick={() => handleDetailClick(task.id || `task-${index}`)}>
                               <h1 className="taskName">{task.TaskName}</h1>
                               <h3 className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 +{7 * task.TaskDiff} xp
                               </h3>
                             </span>
-                            <div className="taskDesc">
-                              <h3>{task.TaskDesc}</h3>
+                            <div
+                              className={`TaskDetail`}
+                            >{showDetail[task.id || `task-${index}`] && (
+                              <>
+                              <div className="taskDet1">
+                                {task.TaskClass && (
+                                  <p>{t(task.TaskClass)}</p>
+                                )}
+                                {task.TaskDiff && ( 
+                                  <p>
+                                    {`${getTaskDifficultyLabel(task.TaskDiff)}`}
+                                  </p>
+                                )}
+                                {task.TaskDueDate && (<span className="taskDate">{formatDate(task.TaskDueDate)}</span> )}
+                              </div>
+                              {task.TaskDesc !== '' && (
+                                <div className="taskDet2">
+                                <h3>{task.TaskDesc}</h3>
+                              </div>
+                              )}
+                              </>
+                            )}
+                              
                             </div>
+
                           </div>
                           <div className="taskControls">
                             <div className="taskCheckCont">
@@ -353,9 +412,6 @@ function TaskList() {
                                   onChange={(event) =>
                                     handleCheckDeleteChange(event, task)
                                   }
-                                  // checked={tasksToDelete.includes(
-                                  //   task.id || 0
-                                  // )}
                                 />
                                 <div className="taskCheck"></div>
                               </label>
@@ -378,7 +434,6 @@ function TaskList() {
                 <label className="imgBtn">
                   <input
                     type="checkbox"
-                    // checked={true}
                     className="checkFinished"
                     onClick={() => handleCompleteBtnClick(task)}
                   />
@@ -387,7 +442,7 @@ function TaskList() {
               </div>
               <div className="taskContent">
                 <h1 className="taskName">{task.TaskName}</h1>
-                <div className="taskDesc">
+                <div className="taskDet2">
                   <h3>{task.TaskDesc}</h3>
                 </div>
               </div>
@@ -409,5 +464,3 @@ function TaskList() {
 }
 
 export default TaskList;
-
-

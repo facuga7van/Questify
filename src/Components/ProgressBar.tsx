@@ -1,28 +1,30 @@
 import { useState, useEffect } from "react";
 import "../Styles/ProgressBar.css";
-import { useNavigate } from "react-router-dom";
 import type { IpcRendererEvent } from "../../electron/preload";
 import { useAuth } from "../AuthContext/index";
-import { doSignOut } from "@/Data/auth";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSignOut } from "@fortawesome/free-solid-svg-icons";
+
 
 export default function Progressbar() {
   const ipcRenderer = (window as any).ipcRenderer;
 const [level, setLevel] = useState(0);
 const [filled, setFilled] = useState(0);
 const [getXp, setGetXp] = useState(false);
-const navigate = useNavigate();
-
+const [userData, setUserData] = useState<any>(() => {
+  const userData = localStorage.getItem("userData");
+return userData ? JSON.parse(userData) : [];
+});
 const { currentUser } = useAuth();
 
 useEffect(() => {
   const handleXPChange = (event: IpcRendererEvent, newXP: number) => {
     if(1>2){
       console.log(event);
+        setUserData(true)
     }
     const calculatedLevel = newXP / 100;
     setLevel(Math.floor(calculatedLevel));
+    userData.level = Math.floor(calculatedLevel);
+    localStorage.setItem("userData", JSON.stringify(userData));
     const levelPercentage = calculatedLevel - Math.floor(calculatedLevel);
     setFilled(levelPercentage * 100);
     setGetXp(false);
@@ -63,17 +65,7 @@ useEffect(() => {
           }}
         />
         <span className="progressPercent">{level}</span>
-        <div className="text-right signOut">
-          <button
-            onClick={() => {
-              doSignOut().then(() => {
-                navigate("/");
-              });
-            }}
-          >
-            <FontAwesomeIcon icon={faSignOut} />
-          </button>
-        </div>
+        
       </div>
     </div>
   );

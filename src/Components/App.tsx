@@ -10,28 +10,34 @@ import Login from "./Auth/Login";
 import Loading from "./Loading";
 import { AuthProvider } from "../AuthContext/index";
 import Register from "./Auth/Register";
+import SideMenu from './SideMenu';
+import Profile from "./Profile";
 
-// Hook personalizado para manejar la autenticación
 const useAuthState = () => {
   const [authState, setAuthState] = useState<true | false | null>(null);
   const auth = getAuth();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      // Simular un pequeño retraso de 500ms para asegurar que el componente Loading sea visible
       setTimeout(() => {
-        setAuthState(!!user); // Actualiza el estado basado en la presencia del usuario
+        
+        setAuthState(!!user); 
       }, 500);
     });
 
-    return () => unsubscribe(); // Cleanup function
+    return () => unsubscribe(); 
   }, [auth]);
 
   return authState;
 };
 
+
+
+
+
 export default function App() {
   const authState = useAuthState();
+
 
   return (
     <AuthProvider>
@@ -42,14 +48,26 @@ export default function App() {
         ) : (
           <Routes>
             {authState ? (
+              <>
               <Route
                 path="/"
                 element={
                   <>
-                    <TaskManager /> <Footer />
+                    <SideMenu/> 
+                    <TaskManager /> 
+                    <Footer />
                   </>
                 }
               />
+              <Route
+                path="/profile"
+                element={
+                  <>
+                    <Profile/> 
+                  </>
+                }
+              />
+              </>
             ) : (
               <>
                 <Route path="/*" element={<Login />} />

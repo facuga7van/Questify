@@ -5,17 +5,20 @@ import titleRight from "../../Assets/titleRight.png";
 import { doSignInWithEmailAndPassword } from "../../Data/auth";
 import { useAuth } from "../../AuthContext/index";
 import "../../Styles/Login.css";
+import { useTranslation } from "react-i18next";
 const Login = () => {
   const { userLoggedIn } = useAuth();
-
+  const ipcRenderer = (window as any).ipcRenderer;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const { t } = useTranslation();
 
   const onSubmit = async (e: any) => {
     e.preventDefault();
     if (!isSigningIn) {
+      ipcRenderer.send("getEmail", email);
       setIsSigningIn(true);
       try{
         await doSignInWithEmailAndPassword(email, password);
@@ -49,7 +52,7 @@ const Login = () => {
           </div>
           <form onSubmit={onSubmit} className="form">
             <div>
-              <label className="label">Email</label>
+              <label className="label">{t('emailuser')}</label>
               <input
                 type="email"
                 autoComplete="email"
@@ -61,7 +64,7 @@ const Login = () => {
             </div>
 
             <div>
-              <label className="label">Password</label>
+              <label className="label">{t('password')}</label>
               <input
                 type="password"
                 autoComplete="current-password"
@@ -83,13 +86,13 @@ const Login = () => {
                 isSigningIn ? "button-disabled" : "button-enabled"
               }`}
             >
-              {isSigningIn ? "Logging In..." : "Log In"}
+              {isSigningIn ? t("loging") : t("login")}
             </button>
           </form>
           <p className="text-center text-sm">
-            Don't have an account?{" "}
+            {t('dontsigned')}
             <Link to={"/register"} className="link">
-              Sign up
+              {" "}{t('signup')}
             </Link>
           </p>
         </div>
