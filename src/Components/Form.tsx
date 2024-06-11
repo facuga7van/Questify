@@ -13,6 +13,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import write from "../Assets/FX/write.mp3";
 import joaco from "../Assets/FX/graciastio.mp3";
 import i18n from "@/Data/i18n";
+import SingleSelect from './selectEdit'; // Asegúrate de importar el nuevo componente
+import { Option } from '../Data/Interfaces/selectEdit';
 
 function Form() {
   const ipcRenderer = (window as any).ipcRenderer;
@@ -20,11 +22,11 @@ function Form() {
   const [taskDesc, setTaskDesc] = useState("");
   const [useDate, setUseDate] = useState(false);
   const [taskDueDate, setTaskDueDate] = useState(new Date());
-  const [taskClass, setTaskClass] = useState("");
+  const [taskClass, setTaskClass] = useState<Option | null>(null);
   const [taskId, setTaskId] = useState("");
   const [isEdit, setIsEdit] = useState(false);
   const [showExtraOptions, setShowExtraOptions] = useState(false);
-
+  const [classOptions, setClassOptions] = useState<Option[]>([]);
   const { t } = useTranslation();
   const { currentUser } = useAuth();
   const writeSound = new Howl({
@@ -36,6 +38,7 @@ function Form() {
     html5: true,
   });
   Howler.volume(0.2);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -45,7 +48,7 @@ function Form() {
       TaskDesc: taskDesc,
       TaskStatus: false,
       TaskUser: currentUser?.uid,
-      TaskClass: taskClass,
+      TaskClass: taskClass ? taskClass.value : "",
       TaskDueDate: useDate ? taskDueDate : null,
       TaskOrder: 0,
     };
@@ -55,17 +58,18 @@ function Form() {
       setTaskName("");
       setTaskDesc("");
       setTaskId("");
-      setTaskClass("");
+      setTaskClass(null);
       setTaskDueDate(new Date());
       const taskInput = document.getElementById("taskInput");
-      taskInput?.classList.remove("needed"); // Add the class conditionally
+      taskInput?.classList.remove("needed");
       setIsEdit(false);
       setShowExtraOptions(false);
     } else {
       const taskInput = document.getElementById("taskInput");
-      taskInput?.classList.add("needed"); // Add the class conditionally
+      taskInput?.classList.add("needed");
     }
   };
+
   const taskAdded = (event: IpcRendererEvent) => {
     if (1 > 2) {
       console.log(event);
@@ -79,6 +83,7 @@ function Form() {
       writeSound.play();
     }
   };
+
   const handleLang = (event: IpcRendererEvent, lang: string) => {
     i18n.changeLanguage(lang);
     if (1 > 2) {
@@ -90,19 +95,50 @@ function Form() {
     ipcRenderer.on("taskAdded", taskAdded);
     ipcRenderer.on("changeLang", handleLang);
   }, []);
+
+  useEffect(() => {
+    const fetchClasses = () => {
+      console.log('holahola')
+      ipcRenderer.send("getTaskClasses", currentUser?.uid);
+    };
+
+    const handleShowClasses = (event: IpcRendererEvent, taskClasses: { className: string }[]) => {
+      const options = taskClasses.map((item) => ({
+        label: item.className,
+        value: item.className,
+      }));
+      setClassOptions(options);
+      console.log(taskClasses);
+    };
+    
+    fetchClasses();
+    ipcRenderer.on("showTaskClasses", handleShowClasses);
+
+    return () => {
+      ipcRenderer.removeAllListeners("showTaskClasses", handleShowClasses);
+    };
+  }, [currentUser]);
+
+  const handleClassChange = (selectedOption: Option | null) => {
+    setTaskClass(selectedOption);
+  };
+
   const handleEditTask = (event: IpcRendererEvent, task: Task) => {
-    setTaskName(task.TaskName || ""); // Set empty string if TaskName is missing
-    setTaskDesc(task.TaskDesc || ""); // Set empty string if TaskDesc is missing
-    setTaskId(task.id || ""); // Set empty string if TaskDesc is missing
+    setTaskName(task.TaskName || "");
+    setTaskDesc(task.TaskDesc || "");
+    setTaskId(task.id || "");
+    setTaskClass(task.TaskClass ? { label: task.TaskClass, value: task.TaskClass } : null);
     if (1 < 2) {
       console.log(event);
     }
     setIsEdit(true);
     setShowExtraOptions(true);
   };
+
   useEffect(() => {
     ipcRenderer.on("sendTaskEdit", handleEditTask);
   }, []);
+
   return (
     <div className="flex">
       <div className="container mx-auto py-4 flex flex-col items-center">
@@ -111,12 +147,9 @@ function Form() {
           <h1 className="titleText">Questify - To Do List</h1>
           <img src={titleRight} alt="Title Right" className="titleImage mx-2" />
         </div>
-        
+
         <div className="formCont w-full max-w-md mb-4">
-          <div
-            className={`checkDate flexRow ${showExtraOptions ? "show" : ""}`}
-          >
-             
+          <div className={`checkDate flexRow ${showExtraOptions ? "show" : ""}`}>
             <div className="checkbox-wrapper-3">
               <input
                 type="checkbox"
@@ -139,9 +172,9 @@ function Form() {
                 onChange={(e) => {
                   setTaskName(e.target.value);
                   if (e.target.value !== "") {
-                    setShowExtraOptions(true); // Mostrar opciones extra cuando hay texto en el input
+                    setShowExtraOptions(true);
                   } else {
-                    setShowExtraOptions(false); // Ocultar opciones extra cuando el input está vacío
+                    setShowExtraOptions(false);
                   }
                 }}
                 className={`w-full px-4 py-2 rounded-md focus:outline-none`}
@@ -160,18 +193,11 @@ function Form() {
                 />
               </div>
               <div className="mb-4 dobleInput">
-                <div className={useDate ? "halfInput" : "fullInput"}>
-                  <select
-                    id="classInput"
-                    value={taskClass}
-                    onChange={(e) => setTaskClass(e.target.value)}
-                    className="w-full px-4 py-2 rounded-md focus:outline-none"
-                  >
-                    <option value="">{t("noClass")}</option> 
-                    <option value="todo">{t("todo")}</option> 
-                    <option value="work">{t("work")}</option> 
-                    <option value="rutine">{t("rutine")}</option> 
-                  </select>
+                <div className={`selectInput ${useDate ? "halfInput" : "fullInput"}`}>
+                  <SingleSelect
+                    options={classOptions}
+                    onChange={handleClassChange}
+                  />
                 </div>
                 {useDate && (
                   <div className="halfInput">
@@ -190,13 +216,12 @@ function Form() {
               </div>
             </div>
             <button type="submit" className="rpgBtn w-full">
-              {isEdit ? t("editQuest") : t("addQuest")} 
+              {isEdit ? t("editQuest") : t("addQuest")}
             </button>
           </form>
         </div>
         <img src={divider} className="dividerImg" alt="Divider"></img>
       </div>
-      
     </div>
   );
 }

@@ -10,9 +10,6 @@ import nose from "../Assets/pixi/nose.png";
 import frontHairPng from "/frontHairs.png";
 import rearHairFrontPng from "/rearHairsFront.png";
 import rearHairBackPng from "/rearHairsBack.png";
-// import rearHairBackJson from "./Spritesheets/rearHairBack.json"
-// import rearHairFrontJson from "./Spritesheets/rearHairFront.json"
-// import frontHairJson from "./Spritesheets/frontHair.json"
 
 import { IpcRendererEvent } from "electron";
 
@@ -36,7 +33,6 @@ const PixiCharacter: React.FC = () => {
         console.log(event);
       }
       if (!charData || charData === undefined || charData.length == 0) {
-        console.log('guardo')
         localStorage.setItem(
           "charData",
           JSON.stringify({
@@ -56,10 +52,8 @@ const PixiCharacter: React.FC = () => {
       console.log(charData)
     };
     if (getCharData) {
-      console.log("set2");
       ipcRenderer.send("getCharacter", currentUser?.uid);
     }
-    console.log("set3");
     ipcRenderer.on("sendCharData", handleCharData);
     return () => {
       ipcRenderer.removeAllListeners("sendCharData", handleCharData);

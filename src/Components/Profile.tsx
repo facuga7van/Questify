@@ -3,7 +3,7 @@ import arrow from "../Assets/arrow.png"; // Assuming arrow image is imported
 import edit from "../Assets/edit.png";
 import titleLeft from "../Assets/titleLeft.png";
 import titleRight from "../Assets/titleRight.png";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../Styles/Profile.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/AuthContext";
@@ -13,15 +13,24 @@ export default function Profile() {
   const navigate = useNavigate();
   const ipcRenderer = (window as any).ipcRenderer;
   const { currentUser } = useAuth();
-
-  const [userData, setUserData] = useState<any>(() => {
-    const userData = localStorage.getItem("userData");
-    return userData ? JSON.parse(userData) : {};
-  });
+  const [userData, setUserData] = useState<any>(null);
+  const [getUserData, setGetUserData] = useState(false);
 
   const [isEdit, setIsEdit] = useState(false);
   const [isProfEdit, setIsProfEdit] = useState(false);
 
+  useEffect(() => {
+    if (getUserData) {
+      setGetUserData(false);
+      setUserData(JSON.parse(localStorage.getItem("userData") || '{}'));
+      console.log(userData)
+    }
+  }, [getUserData]);
+
+  useEffect(() => {
+    setGetUserData(true);
+  }, []);
+  
   const handleEditClick = () => {
     setIsEdit(!isEdit);
   };
@@ -92,7 +101,7 @@ export default function Profile() {
                   />
                 
               ) : (
-                <span className="value">{userData.userName}</span>
+                <span className="value">{userData ? userData.UserName : 'Cargando...'}</span>
               )}
                 </li>
                 <li>
@@ -106,7 +115,7 @@ export default function Profile() {
                     className="editInput"
                   />
                 ) : (
-                  <span className="value">{userData.email}</span>
+                  <span className="value">{userData ? userData.Email : 'Cargando...'}</span>
                 )}
                 </li>
 
@@ -122,49 +131,6 @@ export default function Profile() {
               )}
             </div>
           )}
-
-          {/* <div className="profile-info flex">
-            <ul>
-            <li>
-            <span className="label">Username:</span>
-            {isEdit ? (
-                  <input
-                    type="text"
-                    name="userName"
-                    value={userData.userName}
-                    onChange={handleInputChange}
-                    className="editInput"
-                  />
-                
-              ) : (
-                <span className="value">{userData.userName}</span>
-              )}
-              </li>
-              <li>
-                <span className="label">Email:</span>
-                {isEdit ? (
-                  <input
-                    type="email"
-                    name="email"
-                    value={userData.email}
-                    onChange={handleInputChange}
-                    className="editInput"
-                  />
-                ) : (
-                  <span className="value">{userData.email}</span>
-                )}
-              </li>
-              <li>
-                <span className="label">Level:</span>
-                <span className="value">{userData.level || "N/A"}</span>
-              </li>
-            </ul>
-            {isEdit && (
-              <button className="saveButton" onClick={handleSaveClick}>
-                Save Changes
-              </button>
-            )}
-          </div> */}
         </div>
       </div>
     </>

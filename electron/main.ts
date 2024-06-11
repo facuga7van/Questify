@@ -15,7 +15,7 @@ import { autoUpdater } from "electron-updater";
 import OpenAI from "openai";
 import { Task } from "../src/Data/Interfaces/taskTypes";
 import dotenv from "dotenv";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import {db} from '../src/Data/firebase';
 
 dotenv.config();
@@ -166,7 +166,7 @@ async function getTasks(userId:string) {
     return tasks;
   } catch (error) {
     console.error("Error getting tasks:", error);
-    return []; // Return empty array on error
+    return [];
   }
 }
 
@@ -192,7 +192,6 @@ async function getTaskById(userId: string, id: string) {
 async function addTask(task:any,userId:any){
   
   if (task.id){
-    console.log(task)
       try {
         await setDoc(doc(db, "questify", userId, "tasks",task.id), {
           TaskName: task.TaskName,
@@ -204,14 +203,15 @@ async function addTask(task:any,userId:any){
           TaskDueDate: task.TaskDueDate,
           TaskOrder: task.TaskOrder
       });
+
+      await addClass(task,userId);
+
         return true;
     } catch (e) {
       console.log(e)
     return false;
     }
   }else{
-    console.log('agrego')
-    console.log(task.TaskDueDate)
     try {
       await addDoc(collection(db, "questify", userId, "tasks"), {
         TaskName: task.TaskName,
@@ -223,7 +223,9 @@ async function addTask(task:any,userId:any){
         TaskDueDate: task.TaskDueDate,
         TaskOrder: task.TaskOrder
     });
-    win?.webContents.send("syncTasksBeforeQuit");
+
+    await addClass(task,userId);
+
       return true;
   } catch (e) {
     console.log(e)
@@ -232,26 +234,44 @@ async function addTask(task:any,userId:any){
 
 }
 }
+
+async function addClass(task:any,userId:any){
+  const taskClassDocRef = doc(db, "questify", userId, "taskClasses", task.TaskClass);
+      const taskClassDoc = await getDoc(taskClassDocRef);
+
+      if (!taskClassDoc.exists()) {
+        await setDoc(taskClassDocRef, {
+          className: task.TaskClass,
+          createdDate: serverTimestamp()
+        });
+      } else {
+        await updateDoc(taskClassDocRef, {
+          updatedDate: serverTimestamp()
+        });
+      }
+
+}
+
 async function getXp(userId: string): Promise<number> {
   try {
-    const userRef = doc(collection(db, "questify"), userId); // Use userId to construct path
+    const userRef = doc(collection(db, "questify"), userId);
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
       const userData = userSnap.data();
       if (userData && userData.currentXp) {
-        return Number(userData.currentXp); // Return the user's current XP
+        return Number(userData.currentXp);
       } else {
         console.warn("User data missing 'currentXp' field");
-        return 0; // Return 0 if 'currentXp' is missing
+        return 0;
       }
     } else {
       console.warn("User document not found");
-      return 0; // Return 0 if the user document doesn't exist
+      return 0;
     }
   } catch (error) {
     console.error("Error getting user XP:", error);
-    return 0; // Return 0 on any other error
+    return 0;
   }
 }
 async function getCharacter(userId: string): Promise<Array<any>> {
@@ -262,19 +282,52 @@ async function getCharacter(userId: string): Promise<Array<any>> {
     if (userSnap.exists()) {
       const userData = userSnap.data();
       if (userData && userData.characterData) {
-        return userData.characterData; // Devuelve los datos del personaje del usuario si existen
+        return userData.characterData;
       } 
     } 
 
-    // Si no se encuentra ningún dato de personaje, devuelve un array vacío
     return [];
   } catch (error) {
     console.error("Error getting user XP:", error);
-    // En caso de error, devuelve un array vacío o maneja el error de otra manera según lo necesites
     return [];
   }
 }
+async function getUserData(userId: string): Promise<{ [key: string]: any }> {
+  try {
+    const userRef = doc(collection(db, "questify"), userId);
+    const userSnap = await getDoc(userRef);
 
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      if (userData) {
+        return userData;
+      }
+    } 
+
+    return [];
+  } catch (error) {
+    console.error("Error getting user XP:", error);
+    return [];
+  }
+}
+async function getTaskClasses(userId: string): Promise<{ [key: string]: any }> {
+  try {
+
+    const TaskClassesCollectionRef = collection(db, "questify", userId, "taskClasses");
+    const qe = query(TaskClassesCollectionRef, orderBy("createdDate","asc"));
+
+    const taskClassesSnapshot = await getDocs(qe);
+    const tasksClasses = taskClassesSnapshot.docs.map((doc) => ({
+      className: doc.id,
+    }));
+    
+    console.log(tasksClasses)
+    return tasksClasses;
+  } catch (error) {
+    console.error("Error getting user XP:", error);
+    return [];
+  }
+}
 
 async function addXp(newXp: number, userId:string) {
   try {
@@ -360,6 +413,26 @@ ipcMain.on("setSignup", async(event: Electron.IpcMainEvent, userId:string, email
     event.reply("config-error", (error as Error).message); 
   }
 })
+
+ipcMain.on("getUserData", async (event: Electron.IpcMainEvent, userId:string) => {
+  try {
+    const userData = await getUserData(userId);
+    event.reply("sendUserData", userData);
+  } catch (error) {
+    console.error("Connection refused:", error);
+    event.reply("userData-error", (error as Error).message);
+  }
+});
+
+ipcMain.on("getTaskClasses", async (event: Electron.IpcMainEvent, userId:string) => {
+  try {
+    const TaskClasses = await getTaskClasses(userId);
+    event.reply("showTaskClasses", TaskClasses);
+  } catch (error) {
+    console.error("Connection refused:", error);
+    event.reply("TaskClasses-error", (error as Error).message); 
+  }
+});
 
 ipcMain.on("getCharacter", async (event: Electron.IpcMainEvent, userId:string) => {
   try {

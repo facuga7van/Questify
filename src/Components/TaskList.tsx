@@ -8,6 +8,18 @@ import { useAuth } from "../AuthContext/index";
 import { useTranslation } from "react-i18next";
 import i18n from "@/Data/i18n";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import {
+  MenuItem,
+  Select,
+  Button,
+  FormControl,
+  InputLabel,
+  Box,
+  SelectChangeEvent,
+  IconButton,
+  Menu,
+} from "@mui/material"; // Importar MUI
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
@@ -44,6 +56,28 @@ function TaskList() {
     const savedTasks = localStorage.getItem("taskListPnd");
     return savedTasks ? JSON.parse(savedTasks) : [];
   });
+
+  const [filter, setFilter] = useState<string>(""); // Estado del filtro
+  const [sortOrder, setSortOrder] = useState<string>(""); // Estado del orden
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // Estado para el dropdown
+  const open = Boolean(anchorEl);
+
+  const handleFilterChange = (event: SelectChangeEvent<string>) => {
+    setFilter(event.target.value as string);
+  };
+
+  const handleSortOrderChange = (event: SelectChangeEvent<string>) => {
+    setSortOrder(event.target.value as string);
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   useEffect(() => {
     setGetTasks(true);
@@ -90,49 +124,56 @@ function TaskList() {
   };
 
   const formatDate = (date: any): string => {
-    const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
-  
+    const options: Intl.DateTimeFormatOptions = {
+      hour: "2-digit",
+      minute: "2-digit",
+    };
+
     if (date instanceof Date) {
-      return `${date.toLocaleDateString("es-ES")} ${date.toLocaleTimeString("es-ES", options)}`;
-    } else if (date && date.seconds && typeof date.seconds === 'number') {
-      const milliseconds = date.seconds * 1000 + Math.round(date.nanoseconds / 1000000);
+      return `${date.toLocaleDateString("es-ES")} ${date.toLocaleTimeString(
+        "es-ES",
+        options
+      )}`;
+    } else if (date && date.seconds && typeof date.seconds === "number") {
+      const milliseconds =
+        date.seconds * 1000 + Math.round(date.nanoseconds / 1000000);
       const dateObject = new Date(milliseconds);
-      return `${dateObject.toLocaleDateString("es-ES")} ${dateObject.toLocaleTimeString("es-ES", options)}`;
+      return `${dateObject.toLocaleDateString(
+        "es-ES"
+      )} ${dateObject.toLocaleTimeString("es-ES", options)}`;
     } else {
       return "";
     }
   };
-  
-  
 
-  useEffect(() => {
-    const handleResize = () => {
-      const container = document.getElementById("taskList");
-      if (container) {
-        const windowHeight = window.innerHeight;
-        let minHeight, maxHeight;
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     const container = document.getElementById("taskList");
+  //     if (container) {
+  //       const windowHeight = window.innerHeight;
+  //       let minHeight, maxHeight;
 
-        if (window.screen.availHeight < 768) {
-          minHeight = windowHeight / 3;
-          maxHeight = windowHeight / 3;
-        } else {
-          minHeight = windowHeight * 0.15;
-          maxHeight = windowHeight * 0.6;
-        }
+  //       if (window.screen.availHeight < 768) {
+  //         minHeight = windowHeight / 3;
+  //         maxHeight = windowHeight / 3;
+  //       } else {
+  //         minHeight = windowHeight * 0.15;
+  //         maxHeight = windowHeight * 0.6;
+  //       }
 
-        const containerHeight =
-          minHeight + (maxHeight - minHeight) * (windowHeight / screen.height);
-        container.style.height = containerHeight + "px";
-      }
-    };
+  //       const containerHeight =
+  //         minHeight + (maxHeight - minHeight) * (windowHeight / screen.height);
+  //       container.style.height = containerHeight + "px";
+  //     }
+  //   };
 
-    window.addEventListener("resize", handleResize);
-    handleResize();
+  //   window.addEventListener("resize", handleResize);
+  //   handleResize();
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+  //   return () => {
+  //     window.removeEventListener("resize", handleResize);
+  //   };
+  // }, []);
 
   const handleCheckDeleteChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -236,7 +277,7 @@ function TaskList() {
     } else if (difficulty >= 8 && difficulty <= 10) {
       return t("hard");
     } else {
-      return "Unknown"; 
+      return "Unknown";
     }
   };
   useEffect(() => {
@@ -311,6 +352,25 @@ function TaskList() {
       [taskId]: !prevState[taskId],
     }));
   };
+  const applyFilterAndSort = () => {
+    let filteredTasks = [...pendingTasks];
+    if (filter) {
+      filteredTasks = filteredTasks.filter((task) => task.TaskClass === filter);
+    }
+    if (sortOrder === "TaskDueDate") {
+      filteredTasks.sort(
+        (a, b) =>
+          new Date(a.TaskDueDate).getTime() - new Date(b.TaskDueDate).getTime()
+      );
+    } else if (sortOrder === "TaskDiff") {
+      filteredTasks.sort((a, b) => a.TaskDiff - b.TaskDiff);
+    }
+    setPendingTasks(filteredTasks);
+  };
+
+  useEffect(() => {
+    applyFilterAndSort(); // Aplicar filtro y ordenamiento cada vez que cambien
+  }, [filter, sortOrder]);
 
   return (
     <div>
@@ -320,18 +380,59 @@ function TaskList() {
       >
         <div className="tabsCont">
           <div className="tabs">
+            <div className="tabDropdownBtn">
+            <IconButton
+              aria-label="more"
+              aria-controls="customized-menu"
+              aria-haspopup="true"
+              onClick={handleClick}
+            >
+              <MoreVertIcon />
+            </IconButton>
+            </div>
+            <Menu
+              id="customized-menu"
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              className="dropdownMenu"
+            >
+              <MenuItem>
+                <FormControl variant="standard" fullWidth>
+                  <InputLabel>{t("filterByClass")}</InputLabel>
+                  <Select
+                    value={filter}
+                    onChange={handleFilterChange}
+                    label={t("filterByClass")}
+                    className="dropdownMenuSelect"
+                  >
+                    <MenuItem value="">{t("all")}</MenuItem>
+                    {/* Agregar bucle For recorriendo las clases agregadas por el usuario */}
+                  </Select>
+                </FormControl>
+              </MenuItem>
+            </Menu>
+            
+            
+            <div className="tabBtns">
             <button
-              className={`tab ${activeTab === "pending" ? "active" : ""}`}
+              className={`tabBtn tab ${
+                activeTab === "pending" ? "active" : ""
+              }`}
               onClick={() => setActiveTab("pending")}
             >
               <a>{t("pendings")}</a>
             </button>
             <button
-              className={`tab ${activeTab === "completed" ? "active" : ""}`}
+              className={`tabBtn tab ${
+                activeTab === "completed" ? "active" : ""
+              }`}
               onClick={() => setActiveTab("completed")}
             >
               <a>{t("completed")}</a>
             </button>
+            </div>
+            
           </div>
         </div>
 
@@ -364,37 +465,45 @@ function TaskList() {
                             </label>
                           </div>
                           <div className="taskContent">
-                            <span className="taskNameCont group hover:group" onClick={() => handleDetailClick(task.id || `task-${index}`)}>
+                            <span
+                              className="taskNameCont group hover:group"
+                              onClick={() =>
+                                handleDetailClick(task.id || `task-${index}`)
+                              }
+                            >
                               <h1 className="taskName">{task.TaskName}</h1>
                               <h3 className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 +{7 * task.TaskDiff} xp
                               </h3>
                             </span>
-                            <div
-                              className={`TaskDetail`}
-                            >{showDetail[task.id || `task-${index}`] && (
-                              <>
-                              <div className="taskDet1">
-                                {task.TaskClass && (
-                                  <p>{t(task.TaskClass)}</p>
-                                )}
-                                {task.TaskDiff && ( 
-                                  <p>
-                                    {`${getTaskDifficultyLabel(task.TaskDiff)}`}
-                                  </p>
-                                )}
-                                {task.TaskDueDate && (<span className="taskDate">{formatDate(task.TaskDueDate)}</span> )}
-                              </div>
-                              {task.TaskDesc !== '' && (
-                                <div className="taskDet2">
-                                <h3>{task.TaskDesc}</h3>
-                              </div>
+                            <div className={`TaskDetail`}>
+                              {showDetail[task.id || `task-${index}`] && (
+                                <>
+                                  <div className="taskDet1">
+                                    {task.TaskClass && (
+                                      <p>{t(task.TaskClass)}</p>
+                                    )}
+                                    {task.TaskDiff && (
+                                      <p>
+                                        {`${getTaskDifficultyLabel(
+                                          task.TaskDiff
+                                        )}`}
+                                      </p>
+                                    )}
+                                    {task.TaskDueDate && (
+                                      <span className="taskDate">
+                                        {formatDate(task.TaskDueDate)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {task.TaskDesc !== "" && (
+                                    <div className="taskDet2">
+                                      <h3>{task.TaskDesc}</h3>
+                                    </div>
+                                  )}
+                                </>
                               )}
-                              </>
-                            )}
-                              
                             </div>
-
                           </div>
                           <div className="taskControls">
                             <div className="taskCheckCont">

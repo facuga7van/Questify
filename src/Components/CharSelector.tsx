@@ -10,12 +10,10 @@ import nose from "../Assets/pixi/nose.png";
 import frontHairPng from "/frontHairs.png";
 import rearHairFrontPng from "/rearHairsFront.png";
 import rearHairBackPng from "/rearHairsBack.png";
-// import rearHairBackJson from "./Spritesheets/rearHairBack.json"
-// import rearHairFrontJson from "./Spritesheets/rearHairFront.json"
-// import frontHairJson from "./Spritesheets/frontHair.json"
 
 import "../Styles/CharSel.css";
 import { useAuth } from "@/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const CharacterSelector: React.FC<{}> = () => {
   const pixiContainerRef = useRef<HTMLDivElement>(null);
@@ -26,23 +24,21 @@ const CharacterSelector: React.FC<{}> = () => {
  
   const initialCharData = () => {
     const charData = localStorage.getItem("charData");
-    console.log('charData');
-    console.log(charData);
 
     try {
       return charData ? JSON.parse(charData) : {
-        backHairIndex: 1,
+        backHairIndex: 18,
         frontColorIndex: 1,
         backColorIndex: 1,
-        frontHairIndex: 1,
+        frontHairIndex: 18,
       };
     } catch (error) {
       console.error("Invalid JSON in localStorage", error);
       return {
-        backHairIndex: 1,
+        backHairIndex: 18,
         frontColorIndex: 1,
         backColorIndex: 1,
-        frontHairIndex: 1,
+        frontHairIndex: 18,
       };
     }
   };
@@ -53,6 +49,7 @@ const CharacterSelector: React.FC<{}> = () => {
   const [backColorIndex, setBackColorIndex] = useState(charData.backColorIndex);
   const [frontHairIndex, setFrontHairIndex] = useState(charData.frontHairIndex);
   const ipcRenderer = (window as any).ipcRenderer;
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
 
   useEffect(() => {
@@ -293,15 +290,16 @@ const CharacterSelector: React.FC<{}> = () => {
       ...updates,
     };
     setCharData(newCharData);
-    
   };
   
 
   const saveCharDataToJson = async () => {
     saveCharData({});
     localStorage.setItem("charData", JSON.stringify(charData));
-    ipcRenderer.send("saveChar",currentUser?.uid,charData);}
-
+    ipcRenderer.send("saveChar",currentUser?.uid,charData);
+    navigate("/");
+  }
+    
   return (
     <>
       <div className="ContSelector">

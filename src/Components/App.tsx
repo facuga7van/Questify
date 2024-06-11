@@ -17,8 +17,10 @@ const useAuthState = () => {
   const [authState, setAuthState] = useState<true | false | null>(null);
   const auth = getAuth();
 
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      
       setTimeout(() => {
         
         setAuthState(!!user); 
@@ -27,7 +29,7 @@ const useAuthState = () => {
 
     return () => unsubscribe(); 
   }, [auth]);
-
+  
   return authState;
 };
 

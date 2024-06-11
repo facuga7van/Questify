@@ -7,6 +7,7 @@
     margin-top: 8vh;
     color: rgba(0, 0, 0, 70%);
   }
+
   #taskInput, #descInput, #dueDateInput, #classInput {
     background-color: rgba(0, 0, 0, 0.2);
     color: white;
@@ -63,10 +64,13 @@
   }
   
   .show {
-    max-height: 1000px;
+    max-height: 20rem;
     opacity: 1; 
   }
-
+  .dobleInput{
+    z-index: 999;
+    padding-bottom: 1rem;
+  }
   .checkbox-wrapper-3 .toggle {
     position: relative;
     display: block;
