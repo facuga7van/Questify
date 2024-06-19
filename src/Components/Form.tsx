@@ -98,7 +98,6 @@ function Form() {
 
   useEffect(() => {
     const fetchClasses = () => {
-      console.log('holahola')
       ipcRenderer.send("getTaskClasses", currentUser?.uid);
     };
 

@@ -25,6 +25,8 @@
       "loging":"Iniciando Sesión",
       "dontsigned":"No tienes una cuenta?",
       "signup":"Registrarse",
-      "filterByClass":"Clase"
+      "filterByClass":"Clase",
+      "allClasses":"Todas las Clases",
+      "sortBy":"Ordenar por"
     }
   

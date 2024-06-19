@@ -4,46 +4,65 @@
     min-height: 40px;
     height: auto;
     overflow: visible;
+    background-color: rgba(0, 0, 0, 0.2);
+    color: white;
   }
   
   .basic-single .select__menu {
     z-index: 9999; /* Alta prioridad */
     max-height: 200px; /* Ajusta según sea necesario */
     overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0);
   }
   
   .basic-single .select__value-container {
     padding: 0 8px;
+
   }
   
   .basic-single .select__single-value {
     margin-left: 2px;
     margin-right: 2px;
+
   }
   
   .basic-single .select__input {
     margin: 0;
     padding: 0;
+
   }
   
   .basic-single .select__menu-list {
     padding: 0;
+ 
   }
   
   .basic-single .select__option {
     padding: 8px 10px;
+
   }
   
   .basic-single .select__option--is-focused {
-    background-color: #f0f0f0;
+    background-color: rgba(0, 0, 0, 0.2);
   }
   
   .basic-single .select__option--is-selected {
-    background-color: #ddd;
+    background-color: rgba(0, 0, 0, 0.2);
   }
-  
+  .select__input-container{
+    background-color: rgba(0, 0, 0, 0);
+  }
+  .select__single-value{
+    background-color: rgba(0, 0, 0, 0);
+  }
+
   .selectDiv {
     position: relative;
     z-index: 1;
+    background-color: rgba(0, 0, 0, 0);
   }
-  
+
+  input{
+    background-color: rgba(0, 0, 0, 0);
+    color: white;
+  }

@@ -25,6 +25,8 @@
       "loging":"Loging In...",
       "dontsigned":"Don't have an account?",
       "signup":"Sign Up",
-      "filterByClass":"Class"
-    }
+      "filterByClass":"Class",
+      "allClasses":"All classes",
+      "sortBy":"Sort by"
+}
   

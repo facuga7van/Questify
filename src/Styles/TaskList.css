@@ -62,9 +62,11 @@
   background-color: rgba(0, 0, 0, 0.1); /* Cambia el color de fondo */
   border-radius: 8px; /* Redondea las esquinas */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Agrega una sombra */
+  
 }
 .MuiMenu-paper{
   background-color: red;
+
 }
 .MuiList-root {
   width: 15rem;
@@ -74,7 +76,10 @@
   border: 1px solid #795649;
   
 }
-
+.MuiMenuItem-gutters{
+  display: flex;
+  flex-direction: column;
+}
 
 /* -------------------------- */
 /*            QUESTS          */

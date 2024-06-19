@@ -11,15 +11,14 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import {
   MenuItem,
   Select,
-  Button,
   FormControl,
   InputLabel,
-  Box,
   SelectChangeEvent,
   IconButton,
   Menu,
 } from "@mui/material"; // Importar MUI
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import SortIcon from '@mui/icons-material/Sort';
 
 function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
@@ -52,15 +51,16 @@ function TaskList() {
   const [activeTab, setActiveTab] = useState("pending");
   const [getXp, setGetXp] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
+  const [classOptions, setClassOptions] = useState<string[]>([]);
   const [pendingTasks, setPendingTasks] = useState<Task[]>(() => {
     const savedTasks = localStorage.getItem("taskListPnd");
     return savedTasks ? JSON.parse(savedTasks) : [];
   });
 
-  const [filter, setFilter] = useState<string>(""); // Estado del filtro
-  const [sortOrder, setSortOrder] = useState<string>(""); // Estado del orden
+  const [filter, setFilter] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<string>("");
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // Estado para el dropdown
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
   const handleFilterChange = (event: SelectChangeEvent<string>) => {
@@ -145,35 +145,6 @@ function TaskList() {
       return "";
     }
   };
-
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     const container = document.getElementById("taskList");
-  //     if (container) {
-  //       const windowHeight = window.innerHeight;
-  //       let minHeight, maxHeight;
-
-  //       if (window.screen.availHeight < 768) {
-  //         minHeight = windowHeight / 3;
-  //         maxHeight = windowHeight / 3;
-  //       } else {
-  //         minHeight = windowHeight * 0.15;
-  //         maxHeight = windowHeight * 0.6;
-  //       }
-
-  //       const containerHeight =
-  //         minHeight + (maxHeight - minHeight) * (windowHeight / screen.height);
-  //       container.style.height = containerHeight + "px";
-  //     }
-  //   };
-
-  //   window.addEventListener("resize", handleResize);
-  //   handleResize();
-
-  //   return () => {
-  //     window.removeEventListener("resize", handleResize);
-  //   };
-  // }, []);
 
   const handleCheckDeleteChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -352,26 +323,51 @@ function TaskList() {
       [taskId]: !prevState[taskId],
     }));
   };
-  const applyFilterAndSort = () => {
-    let filteredTasks = [...pendingTasks];
-    if (filter) {
-      filteredTasks = filteredTasks.filter((task) => task.TaskClass === filter);
-    }
-    if (sortOrder === "TaskDueDate") {
-      filteredTasks.sort(
-        (a, b) =>
-          new Date(a.TaskDueDate).getTime() - new Date(b.TaskDueDate).getTime()
-      );
-    } else if (sortOrder === "TaskDiff") {
-      filteredTasks.sort((a, b) => a.TaskDiff - b.TaskDiff);
-    }
-    setPendingTasks(filteredTasks);
-  };
-
   useEffect(() => {
-    applyFilterAndSort(); // Aplicar filtro y ordenamiento cada vez que cambien
-  }, [filter, sortOrder]);
+    if (1 > 2) {
+      console.log(taskList);
+    }
+    const fetchClasses = () => {
+      ipcRenderer.send("getTaskClasses", currentUser?.uid);
+    };
 
+    const handleShowClasses = (
+      event: IpcRendererEvent,
+      taskClasses: { className: string }[]
+    ) => {
+      const classNames = taskClasses.map((taskClass) => taskClass.className);
+      setClassOptions(classNames);
+      if (1 > 2) {
+        console.log(event);
+      }
+    };
+
+    fetchClasses();
+    ipcRenderer.on("showTaskClasses", handleShowClasses);
+
+    return () => {
+      ipcRenderer.removeAllListeners("showTaskClasses", handleShowClasses);
+    };
+  }, [taskList]);
+
+  const filteredTasks = pendingTasks.filter(
+    (task) => filter === "" || task.TaskClass === filter
+  );
+
+  const sortedTasks = filteredTasks.sort((a, b) => {
+    if (sortOrder === "difficulty") {
+      return b.TaskDiff - a.TaskDiff; // Sort by difficulty in descending order
+    } else if (sortOrder === "dueDate") {
+      return (
+        new Date(a.TaskDueDate).getTime() - new Date(b.TaskDueDate).getTime()
+      ); // Sort by due date in ascending order
+    } else if (sortOrder === "alphabetical") {
+      return a.TaskName.localeCompare(b.TaskName); // Sort by task name alphabetically
+    }
+    return 0;
+  });
+
+  // Termina clases
   return (
     <div>
       <div
@@ -381,14 +377,14 @@ function TaskList() {
         <div className="tabsCont">
           <div className="tabs">
             <div className="tabDropdownBtn">
-            <IconButton
-              aria-label="more"
-              aria-controls="customized-menu"
-              aria-haspopup="true"
-              onClick={handleClick}
-            >
-              <MoreVertIcon />
-            </IconButton>
+              <IconButton
+                aria-label="more"
+                aria-controls="customized-menu"
+                aria-haspopup="true"
+                onClick={handleClick}
+              >
+                <MoreVertIcon />
+              </IconButton>
             </div>
             <Menu
               id="customized-menu"
@@ -400,39 +396,73 @@ function TaskList() {
               <MenuItem>
                 <FormControl variant="standard" fullWidth>
                   <InputLabel>{t("filterByClass")}</InputLabel>
-                  <Select
-                    value={filter}
-                    onChange={handleFilterChange}
-                    label={t("filterByClass")}
-                    className="dropdownMenuSelect"
-                  >
-                    <MenuItem value="">{t("all")}</MenuItem>
-                    {/* Agregar bucle For recorriendo las clases agregadas por el usuario */}
+                  <Select value={filter} onChange={handleFilterChange}>
+                    <MenuItem value="">{t("allClasses")}</MenuItem>
+                    {classOptions.map((classOption) => (
+                      <MenuItem key={classOption} value={classOption}>
+                        {classOption}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </MenuItem>
+              {/* <MenuItem>
+              <FormControl className="sort" variant="standard" fullWidth>
+                  <InputLabel>{t("sortBy")}</InputLabel>
+                  <Select value={sortOrder} onChange={handleSortOrderChange}>
+                    <MenuItem value="asc">{t("ascending")}</MenuItem>
+                    <MenuItem value="desc">{t("descending")}</MenuItem>
+                  </Select>
+                </FormControl>
+              </MenuItem> */}
             </Menu>
-            
-            
+
             <div className="tabBtns">
-            <button
-              className={`tabBtn tab ${
-                activeTab === "pending" ? "active" : ""
-              }`}
-              onClick={() => setActiveTab("pending")}
-            >
-              <a>{t("pendings")}</a>
-            </button>
-            <button
-              className={`tabBtn tab ${
-                activeTab === "completed" ? "active" : ""
-              }`}
-              onClick={() => setActiveTab("completed")}
-            >
-              <a>{t("completed")}</a>
-            </button>
+              <button
+                className={`tabBtn tab ${
+                  activeTab === "pending" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("pending")}
+              >
+                <a>{t("pendings")}</a>
+              </button>
+              <button
+                className={`tabBtn tab ${
+                  activeTab === "completed" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("completed")}
+              >
+                <a>{t("completed")}</a>
+              </button>
             </div>
             
+            {/* <div className="tabDropdownBtn">
+              <IconButton
+                aria-label="more"
+                aria-controls="customized-menu"
+                aria-haspopup="true"
+                onClick={handleClick}
+              >
+                <SortIcon />
+              </IconButton>
+            </div>
+            <Menu
+              id="customized-menu"
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              className="dropdownMenu"
+            >
+              <MenuItem>
+              <FormControl className="sort" variant="standard" fullWidth>
+                  <InputLabel>{t("sortBy")}</InputLabel>
+                  <Select value={sortOrder} onChange={handleSortOrderChange}>
+                    <MenuItem value="asc">{t("ascending")}</MenuItem>
+                    <MenuItem value="desc">{t("descending")}</MenuItem>
+                  </Select>
+                </FormControl>
+              </MenuItem>
+            </Menu> */}
           </div>
         </div>
 
@@ -441,7 +471,7 @@ function TaskList() {
             {(provided) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
                 {activeTab === "pending" &&
-                  pendingTasks.map((task, index) => (
+                  sortedTasks.map((task, index) => (
                     <Draggable
                       key={task.id}
                       draggableId={task.id!.toString()}
