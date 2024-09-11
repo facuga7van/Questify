@@ -552,6 +552,10 @@ ipcMain.on("addTask", async (event, newTask) => {
       try{
         await addTask(newTask,userId);
         win?.webContents.send("taskAdded");
+        if (newTask.TaskClass) {
+          const TaskClasses = await getTaskClasses(userId);
+          win?.webContents.send("showTaskClasses", TaskClasses);
+        }
       }catch(e){
         console.log(e)
       }

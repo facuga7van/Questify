@@ -18,7 +18,7 @@ import {
   Menu,
 } from "@mui/material"; // Importar MUI
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import SortIcon from '@mui/icons-material/Sort';
+// import SortIcon from '@mui/icons-material/Sort';
 
 function TaskList() {
   const ipcRenderer = (window as any).ipcRenderer;
@@ -65,10 +65,6 @@ function TaskList() {
 
   const handleFilterChange = (event: SelectChangeEvent<string>) => {
     setFilter(event.target.value as string);
-  };
-
-  const handleSortOrderChange = (event: SelectChangeEvent<string>) => {
-    setSortOrder(event.target.value as string);
   };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -216,6 +212,8 @@ function TaskList() {
     };
   }, []);
 
+  
+
   const [xpGained, setXpGained] = useState(0);
   const expAlertRef = useRef<HTMLDivElement>(null);
 
@@ -350,11 +348,29 @@ function TaskList() {
     };
   }, [taskList]);
 
+  // const handleNewClass = async (event: IpcRendererEvent, lang: string) => {
+  //   i18n.changeLanguage(lang);
+  //   if (1 > 2) {
+  //     console.log(event);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   ipcRenderer.on("refreshClassList", handleNewClass);
+
+  //   return () => {
+  //     ipcRenderer.removeAllListeners("refreshClassList");
+  //   };
+  // }, []);
+
   const filteredTasks = pendingTasks.filter(
     (task) => filter === "" || task.TaskClass === filter
   );
 
   const sortedTasks = filteredTasks.sort((a, b) => {
+    if(1>2){
+      setSortOrder('a')
+    }
     if (sortOrder === "difficulty") {
       return b.TaskDiff - a.TaskDiff; // Sort by difficulty in descending order
     } else if (sortOrder === "dueDate") {

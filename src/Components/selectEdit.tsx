@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import Select, { components, SingleValueProps } from "react-select";
+import { components, SingleValueProps } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { Option, Props, State } from '../Data/Interfaces/selectEdit';
 import '../Styles/SelectEdit.css';

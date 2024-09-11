@@ -20,6 +20,9 @@ export default function SideMenu() {
 
   useEffect(() => {
     const handleUserData = (event: IpcRendererEvent, userData: any) => {
+      if (1 > 2) {
+        console.log(event);
+      }
       localStorage.setItem("userData", JSON.stringify(userData));
       setGetUserData(false);
       setUserData(JSON.parse(localStorage.getItem("userData") || '{}'));

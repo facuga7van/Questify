@@ -13,8 +13,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import write from "../Assets/FX/write.mp3";
 import joaco from "../Assets/FX/graciastio.mp3";
 import i18n from "@/Data/i18n";
-import SingleSelect from './selectEdit'; // Asegúrate de importar el nuevo componente
-import { Option } from '../Data/Interfaces/selectEdit';
+import SingleSelect from "./selectEdit"; // Asegúrate de importar el nuevo componente
+import { Option } from "../Data/Interfaces/selectEdit";
 
 function Form() {
   const ipcRenderer = (window as any).ipcRenderer;
@@ -101,7 +101,13 @@ function Form() {
       ipcRenderer.send("getTaskClasses", currentUser?.uid);
     };
 
-    const handleShowClasses = (event: IpcRendererEvent, taskClasses: { className: string }[]) => {
+    const handleShowClasses = (
+      event: IpcRendererEvent,
+      taskClasses: { className: string }[]
+    ) => {
+      if (1 > 2) {
+        console.log(event);
+      }
       const options = taskClasses.map((item) => ({
         label: item.className,
         value: item.className,
@@ -109,7 +115,7 @@ function Form() {
       setClassOptions(options);
       console.log(taskClasses);
     };
-    
+
     fetchClasses();
     ipcRenderer.on("showTaskClasses", handleShowClasses);
 
@@ -126,7 +132,9 @@ function Form() {
     setTaskName(task.TaskName || "");
     setTaskDesc(task.TaskDesc || "");
     setTaskId(task.id || "");
-    setTaskClass(task.TaskClass ? { label: task.TaskClass, value: task.TaskClass } : null);
+    setTaskClass(
+      task.TaskClass ? { label: task.TaskClass, value: task.TaskClass } : null
+    );
     if (1 < 2) {
       console.log(event);
     }
@@ -148,7 +156,9 @@ function Form() {
         </div>
 
         <div className="formCont w-full max-w-md mb-4">
-          <div className={`checkDate flexRow ${showExtraOptions ? "show" : ""}`}>
+          <div
+            className={`checkDate flexRow ${showExtraOptions ? "show" : ""}`}
+          >
             <div className="checkbox-wrapper-3">
               <input
                 type="checkbox"
@@ -192,7 +202,11 @@ function Form() {
                 />
               </div>
               <div className="mb-4 dobleInput">
-                <div className={`selectInput ${useDate ? "halfInput" : "fullInput"}`}>
+                <div
+                  className={`selectInput ${
+                    useDate ? "halfInput" : "fullInput"
+                  }`}
+                >
                   <SingleSelect
                     options={classOptions}
                     onChange={handleClassChange}
