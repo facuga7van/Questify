@@ -14,8 +14,17 @@ import rearHairBackPng from "/rearHairsBack.png";
 import "../Styles/CharSel.css";
 import { useAuth } from "@/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { setCharacterData } from "@/Data/firestore";
 
-const CharacterSelector: React.FC<{}> = () => {
+type Props = {
+  onDone?: () => void;
+  returnTo?: string;
+  stayOnSave?: boolean;
+};
+
+type SaveState = "idle" | "saving" | "saved" | "error";
+
+const CharacterSelector: React.FC<Props> = ({ onDone, returnTo, stayOnSave }) => {
   const pixiContainerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application<Renderer> | null>(null);
   const rearHairBackSpriteRef = useRef<Sprite | null>(null);
@@ -48,9 +57,10 @@ const CharacterSelector: React.FC<{}> = () => {
   const [frontColorIndex, setFrontColorIndex] = useState(charData.frontColorIndex);
   const [backColorIndex, setBackColorIndex] = useState(charData.backColorIndex);
   const [frontHairIndex, setFrontHairIndex] = useState(charData.frontHairIndex);
-  const ipcRenderer = (window as any).ipcRenderer;
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const savedTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!appRef.current) {
@@ -294,38 +304,101 @@ const CharacterSelector: React.FC<{}> = () => {
   
 
   const saveCharDataToJson = async () => {
-    saveCharData({});
-    localStorage.setItem("charData", JSON.stringify(charData));
-    ipcRenderer.send("saveChar",currentUser?.uid,charData);
-    navigate("/");
+    const uid = currentUser?.uid;
+    if (!uid) return;
+    if (saveState === "saving") return;
+
+    try {
+      setSaveState("saving");
+      // sincroniza localmente + remoto
+      saveCharData({});
+      localStorage.setItem("charData", JSON.stringify(charData));
+      await setCharacterData(uid, charData);
+
+      setSaveState("saved");
+      if (savedTimerRef.current) window.clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = window.setTimeout(() => setSaveState("idle"), 1200);
+
+      if (stayOnSave) return;
+      if (onDone) {
+        // deja un micro-momento para que se vea el "Guardado"
+        window.setTimeout(() => onDone(), 450);
+        return;
+      }
+      navigate(returnTo ?? "/");
+    } catch (e) {
+      console.error("Error saving character data", e);
+      setSaveState("error");
+      if (savedTimerRef.current) window.clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = window.setTimeout(() => setSaveState("idle"), 1600);
+    }
   }
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) window.clearTimeout(savedTimerRef.current);
+    };
+  }, []);
     
   return (
     <>
       <div className="ContSelector">
-        <div className="CharContSel" ref={pixiContainerRef}></div>
-        <div className="SelBtnCont w-full">
-          <button onClick={handlePrevHairFront}>◄</button>
-          <span>Front Hair</span>
-          <button onClick={handleNextHairFront}>►</button>
-        </div>
-        <div className="SelBtnCont w-full mt-3">
-          <button onClick={handlePrevFrontColor}>◄</button>
-          <span>Front Hair Color</span>
-          <button onClick={handleNextFrontColor}>►</button>
-        </div>
-        <div className="SelBtnCont w-full mt-3">
-          <button onClick={handlePrevHair}>◄</button>
-          <span>Back Hair</span>
-          <button onClick={handleNextHair}>►</button>
-        </div>
-        <div className="SelBtnCont w-full mt-3">
-          <button onClick={handlePrevBackColor}>◄</button>
-          <span>Back Hair Color</span>
-          <button onClick={handleNextBackColor}>►</button>
-        </div>
-        <div className="SelBtnCont w-full mt-3">
-          <button onClick={saveCharDataToJson}>Save</button>
+        <div className="CharContSel" ref={pixiContainerRef} />
+
+        <div className="SelGroup" role="group" aria-label="Personalización del avatar">
+          <div className="SelRow">
+            <button className="SelArrow" type="button" onClick={handlePrevHairFront} aria-label="Anterior pelo frontal">
+              ◄
+            </button>
+            <div className="SelLabel">Pelo frontal</div>
+            <button className="SelArrow" type="button" onClick={handleNextHairFront} aria-label="Siguiente pelo frontal">
+              ►
+            </button>
+          </div>
+
+          <div className="SelRow">
+            <button className="SelArrow" type="button" onClick={handlePrevFrontColor} aria-label="Anterior color pelo frontal">
+              ◄
+            </button>
+            <div className="SelLabel">Color frontal</div>
+            <button className="SelArrow" type="button" onClick={handleNextFrontColor} aria-label="Siguiente color pelo frontal">
+              ►
+            </button>
+          </div>
+
+          <div className="SelRow">
+            <button className="SelArrow" type="button" onClick={handlePrevHair} aria-label="Anterior pelo trasero">
+              ◄
+            </button>
+            <div className="SelLabel">Pelo trasero</div>
+            <button className="SelArrow" type="button" onClick={handleNextHair} aria-label="Siguiente pelo trasero">
+              ►
+            </button>
+          </div>
+
+          <div className="SelRow">
+            <button className="SelArrow" type="button" onClick={handlePrevBackColor} aria-label="Anterior color pelo trasero">
+              ◄
+            </button>
+            <div className="SelLabel">Color trasero</div>
+            <button className="SelArrow" type="button" onClick={handleNextBackColor} aria-label="Siguiente color pelo trasero">
+              ►
+            </button>
+          </div>
+
+          <div className="SelFooter">
+            <button
+              className={`SelSave ${saveState}`}
+              type="button"
+              onClick={saveCharDataToJson}
+              disabled={saveState === "saving"}
+            >
+              {saveState === "saving" ? "Guardando..." : saveState === "saved" ? "Guardado" : "Guardar cambios"}
+            </button>
+            <div className={`SelStatus ${saveState}`} aria-live="polite">
+              {saveState === "error" ? "No se pudo guardar. Reintentá." : " "}
+            </div>
+          </div>
         </div>
       </div>
     </>

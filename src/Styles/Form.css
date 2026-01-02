@@ -1,3 +1,28 @@
+.formCont{
+  background-color: rgba(0, 0, 0, 0.10);
+  border: 1px solid rgba(121, 86, 73, 0.55);
+  border-radius: 10px;
+  box-shadow: var(--q-shadow-inset);
+  padding: 1rem;
+}
+
+.formToolbar{
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: all 0.2s ease-out;
+}
+.formToolbar.show{
+  max-height: 4rem;
+  opacity: 1;
+}
+.formToggleRow{
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.25rem 0.15rem 0.5rem 0.15rem;
+}
+
 
 .titleContainer {
     display: flex;
@@ -5,16 +30,25 @@
     user-select: none;
     margin-bottom: 2vh;
     margin-top: 8vh;
-    color: rgba(0, 0, 0, 70%);
+    color: var(--q-ink-soft);
   }
 
   #taskInput, #descInput, #dueDateInput, #classInput {
-    background-color: rgba(0, 0, 0, 0.2);
-    color: white;
+    background-color: var(--q-panel-2);
+    color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(121, 86, 73, 0.35);
+    box-shadow: var(--q-shadow-inset);
+  }
+  #taskInput:focus, #descInput:focus, #dueDateInput:focus, #classInput:focus {
+    outline: none;
+    border-color: rgba(215, 180, 106, 0.75);
+    box-shadow: 0 0 0 2px rgba(215, 180, 106, 0.20), var(--q-shadow-inset);
   }
   .titleText{
     font-size: 2rem;
     font-weight: bold;
+    font-family: var(--q-font-title);
+    letter-spacing: 0.02em;
   }
   #taskInput::placeholder, #descInput::placeholder {
     color: rgba(255, 255, 255, 0.5);
@@ -51,11 +85,6 @@
     visibility: hidden;
     display: none;
   }
-  .flexRow {
-    display: flex;
-    flex-direction: row-reverse;
-    margin-bottom: 0.5rem;
-  }
   .checkDate, .extraOptions {
     overflow: hidden; /* Asegura que los elementos que se desvanecen no sobresalgan */
     max-height: 0; /* Inicialmente oculto */
@@ -68,14 +97,15 @@
     opacity: 1; 
   }
   .dobleInput{
-    z-index: 999;
+    /* No levantar el bloque por encima del sidebar */
+    z-index: auto;
     padding-bottom: 1rem;
   }
   .checkbox-wrapper-3 .toggle {
     position: relative;
     display: block;
-    width: 40px;
-    height: 20px;
+    width: 44px;
+    height: 22px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     transform: translate3d(0, 0, 0);
@@ -85,10 +115,12 @@
     position: relative;
     top: 3px;
     left: 3px;
-    width: 34px;
-    height: 14px;
+    width: 38px;
+    height: 16px;
     display: block;
-    background: #9A9999;
+    background: linear-gradient(180deg, rgba(121, 86, 73, 0.65), rgba(65, 46, 39, 0.70));
+    border: 1px solid rgba(215, 180, 106, 0.35);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.35);
     border-radius: 8px;
     transition: background 0.2s ease;
   }
@@ -96,12 +128,13 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     display: block;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 3px 8px rgba(154, 153, 153, 0.5);
+    background: radial-gradient(circle at 30% 30%, rgba(244,229,195,0.95), rgba(192,160,128,0.95));
+    border-radius: 12px;
+    border: 1px solid rgba(215, 180, 106, 0.65);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.35);
     transition: all 0.2s ease;
   }
   .checkbox-wrapper-3 .toggle span:before {
@@ -111,7 +144,7 @@
     margin: -18px;
     width: 56px;
     height: 56px;
-    background: rgba(79, 46, 220, 0.5);
+    background: rgba(215, 180, 106, 0.25);
     border-radius: 50%;
     transform: scale(0);
     opacity: 1;
@@ -119,13 +152,12 @@
   }
 
   .checkbox-wrapper-3 #cbx-3:checked + .toggle:before {
-    background: #947ADA;
+    background: linear-gradient(180deg, rgba(215, 180, 106, 0.55), rgba(121, 86, 73, 0.65));
   }
   .checkbox-wrapper-3 #cbx-3:checked + .toggle span {
-    background: #4F2EDC;
-    transform: translateX(20px);
+    transform: translateX(22px);
     transition: all 0.2s cubic-bezier(0.8, 0.4, 0.3, 1.25), background 0.15s ease;
-    box-shadow: 0 3px 8px rgba(79, 46, 220, 0.2);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.35);
   }
   .checkbox-wrapper-3 #cbx-3:checked + .toggle span:before {
     transform: scale(1);
@@ -149,13 +181,14 @@
   }
   .rpgBtn {
     padding: 10px 20px;
-    background-color: #795649; /* A dark wood-like brown */
-    color: #f4e5c3; /* A parchment-like off-white */
-    border: 2px solid #c0a080; /* A lighter brown border */
-    font-family: 'Goudy Bookletter 1911', serif; /* A font with an old-style feel */
+    background: linear-gradient(180deg, rgba(121, 86, 73, 0.95), rgba(94, 64, 53, 0.95));
+    color: rgba(244, 229, 195, 0.98);
+    border: 1px solid rgba(192, 160, 128, 0.85);
+    font-family: "Goudy Bookletter 1911", serif;
     font-size: 18px;
-    text-shadow: 1px 1px 0px #a67c52; /* Gives a bit of depth to the text */
-    box-shadow: 2px 2px 0px #a67c52; /* Simulates an inset look */
+    letter-spacing: 0.02em;
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
     border-radius: 4px; /* Slightly rounded corners */
     cursor: pointer;
     transition: all 0.3s ease;
@@ -165,13 +198,14 @@
     width: 30rem;
   }
   .rpgBtn:hover {
-    background-color: #5e4035; /* A lighter, worn wood color for hover */
+    transform: translateY(-1px);
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.25));
     
   }
   
   .rpgBtn:active {
-    box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
-    transform: translateY(2px); /* Moves the button down to simulate a press */
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+    transform: translateY(1px);
   }
   .react-datepicker__header {
     text-align: center;

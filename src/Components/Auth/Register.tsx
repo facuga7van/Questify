@@ -6,6 +6,7 @@ import titleRight from "../../Assets/titleRight.png";
 import { doCreateUserWithEmailAndPassword } from "../../Data/auth";
 import "../../Styles/Signin.css";
 import { useTranslation } from "react-i18next";
+import { initializeUserDoc } from "@/Data/firestore";
 
 const Register = () => { // Make it a function component
   const [email, setEmail] = useState("");
@@ -16,15 +17,19 @@ const Register = () => { // Make it a function component
   const [errorMessage, setErrorMessage] = useState("");
   const { t } = useTranslation();
   const { userLoggedIn } = useAuth();
-  const ipcRenderer = (window as any).ipcRenderer;
 
   const onSubmit = async (e: any) => {
     e.preventDefault();
     if (!isRegistering) {
       setIsRegistering(true);
       try {
+        if (password !== confirmPassword) {
+          setErrorMessage("Las contraseñas no coinciden");
+          setIsRegistering(false);
+          return;
+        }
         let auth = await doCreateUserWithEmailAndPassword(email, password);
-        ipcRenderer.send("setSignup", auth.user.uid, email, userName);
+        await initializeUserDoc(auth.user.uid, { UserName: userName, Email: email });
         const user = {
           userName: userName,
           email: email,

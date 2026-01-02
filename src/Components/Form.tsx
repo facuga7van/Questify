@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { IpcRendererEvent } from "../../electron/preload";
 import divider from "../Assets/divider.png";
 import "../Styles/Form.css";
-import { Task } from "../Data/Interfaces/taskTypes";
+import type { Task } from "../Data/Interfaces/taskTypes";
 import { useAuth } from "@/AuthContext";
 import { Howl, Howler } from "howler";
 import DatePicker from "react-datepicker";
@@ -15,13 +15,19 @@ import joaco from "../Assets/FX/graciastio.mp3";
 import i18n from "@/Data/i18n";
 import SingleSelect from "./selectEdit"; // Asegúrate de importar el nuevo componente
 import { Option } from "../Data/Interfaces/selectEdit";
+import { subscribeTaskClasses, upsertTask } from "@/Data/firestore";
 
-function Form() {
-  const ipcRenderer = (window as any).ipcRenderer;
+type Props = {
+  editingTask: Task | null;
+  onSaved?: () => void;
+};
+
+function Form({ editingTask, onSaved }: Props) {
+  const ipcRenderer = (window as any).ipcRenderer; // solo lo dejamos por idioma/config (Electron)
   const [taskName, setTaskName] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
   const [useDate, setUseDate] = useState(false);
-  const [taskDueDate, setTaskDueDate] = useState(new Date());
+  const [taskDueDate, setTaskDueDate] = useState<Date | null>(null);
   const [taskClass, setTaskClass] = useState<Option | null>(null);
   const [taskId, setTaskId] = useState("");
   const [isEdit, setIsEdit] = useState(false);
@@ -39,48 +45,82 @@ function Form() {
   });
   Howler.volume(0.2);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (!editingTask) {
+      setIsEdit(false);
+      return;
+    }
+
+    setTaskName(editingTask.TaskName || "");
+    setTaskDesc(editingTask.TaskDesc || "");
+    setTaskId(editingTask.id || "");
+    setTaskClass(
+      editingTask.TaskClass
+        ? { label: editingTask.TaskClass, value: editingTask.TaskClass }
+        : null
+    );
+
+    const due = editingTask.TaskDueDate;
+    if (due && typeof due === "object" && "seconds" in due) {
+      const ms = due.seconds * 1000 + Math.round((due as any).nanoseconds / 1000000);
+      setTaskDueDate(new Date(ms));
+      setUseDate(true);
+    } else if (due instanceof Date) {
+      setTaskDueDate(due);
+      setUseDate(true);
+    } else {
+      setUseDate(false);
+      setTaskDueDate(null);
+    }
+
+    setIsEdit(true);
+    setShowExtraOptions(true);
+  }, [editingTask]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const newTask = {
-      id: taskId,
+    const uid = currentUser?.uid;
+    if (!uid) return;
+
+    const newTask: Partial<Task> & { id?: string } = {
+      id: taskId || undefined,
       TaskName: taskName,
       TaskDesc: taskDesc,
-      TaskStatus: false,
-      TaskUser: currentUser?.uid,
+      TaskStatus: editingTask?.TaskStatus ?? false,
       TaskClass: taskClass ? taskClass.value : "",
       TaskDueDate: useDate ? taskDueDate : null,
-      TaskOrder: 0,
+      TaskOrder: editingTask?.TaskOrder ?? 0,
+      // por ahora no calculamos IA acá (se puede enchufar después)
+      TaskDiff: editingTask?.TaskDiff ?? 0,
     };
 
     if (newTask.TaskName !== "") {
-      ipcRenderer.send("addTask", newTask);
+      await upsertTask(uid, newTask);
+
+      if (
+        uid === "7MfCdgHwfgc3MchqqsHKRDvOzkm1" ||
+        uid === "XkIjCIHs7xPLL3neZsMpFBBCeaG2"
+      ) {
+        joacoSound.play();
+      } else {
+        writeSound.play();
+      }
+
       setTaskName("");
       setTaskDesc("");
       setTaskId("");
       setTaskClass(null);
-      setTaskDueDate(new Date());
+      setTaskDueDate(null);
+      setUseDate(false);
       const taskInput = document.getElementById("taskInput");
       taskInput?.classList.remove("needed");
       setIsEdit(false);
       setShowExtraOptions(false);
+      onSaved?.();
     } else {
       const taskInput = document.getElementById("taskInput");
       taskInput?.classList.add("needed");
-    }
-  };
-
-  const taskAdded = (event: IpcRendererEvent) => {
-    if (1 > 2) {
-      console.log(event);
-    }
-    if (
-      currentUser?.uid === "7MfCdgHwfgc3MchqqsHKRDvOzkm1" ||
-      currentUser?.uid === "XkIjCIHs7xPLL3neZsMpFBBCeaG2"
-    ) {
-      joacoSound.play();
-    } else {
-      writeSound.play();
     }
   };
 
@@ -92,83 +132,59 @@ function Form() {
   };
 
   useEffect(() => {
-    ipcRenderer.on("taskAdded", taskAdded);
     ipcRenderer.on("changeLang", handleLang);
+    return () => {
+      ipcRenderer.off("changeLang", handleLang);
+    };
   }, []);
 
   useEffect(() => {
-    const fetchClasses = () => {
-      ipcRenderer.send("getTaskClasses", currentUser?.uid);
-    };
-
-    const handleShowClasses = (
-      event: IpcRendererEvent,
-      taskClasses: { className: string }[]
-    ) => {
-      if (1 > 2) {
-        console.log(event);
-      }
-      const options = taskClasses.map((item) => ({
-        label: item.className,
-        value: item.className,
-      }));
-      setClassOptions(options);
-      console.log(taskClasses);
-    };
-
-    fetchClasses();
-    ipcRenderer.on("showTaskClasses", handleShowClasses);
-
-    return () => {
-      ipcRenderer.removeAllListeners("showTaskClasses", handleShowClasses);
-    };
-  }, [currentUser]);
+    const uid = currentUser?.uid;
+    if (!uid) return;
+    const unsub = subscribeTaskClasses(uid, (classes) => {
+      setClassOptions(classes.map((c) => ({ label: c, value: c })));
+    });
+    return () => unsub();
+  }, [currentUser?.uid]);
 
   const handleClassChange = (selectedOption: Option | null) => {
     setTaskClass(selectedOption);
   };
 
-  const handleEditTask = (event: IpcRendererEvent, task: Task) => {
-    setTaskName(task.TaskName || "");
-    setTaskDesc(task.TaskDesc || "");
-    setTaskId(task.id || "");
-    setTaskClass(
-      task.TaskClass ? { label: task.TaskClass, value: task.TaskClass } : null
-    );
-    if (1 < 2) {
-      console.log(event);
-    }
-    setIsEdit(true);
-    setShowExtraOptions(true);
-  };
-
-  useEffect(() => {
-    ipcRenderer.on("sendTaskEdit", handleEditTask);
-  }, []);
+  // edición ahora se maneja vía props (TaskManager), no por IPC
 
   return (
     <div className="flex">
       <div className="container mx-auto py-4 flex flex-col items-center">
         <div className="titleContainer">
           <img src={titleLeft} alt="Title Left" className="titleImage mx-2" />
-          <h1 className="titleText">Questify - To Do List</h1>
+          <h1 className="titleText">Questify</h1>
           <img src={titleRight} alt="Title Right" className="titleImage mx-2" />
         </div>
 
         <div className="formCont w-full max-w-md mb-4">
-          <div
-            className={`checkDate flexRow ${showExtraOptions ? "show" : ""}`}
-          >
-            <div className="checkbox-wrapper-3">
-              <input
-                type="checkbox"
-                id="cbx-3"
-                checked={useDate}
-                onChange={(e) => setUseDate(e.target.checked)}
-              />
-              <label htmlFor="cbx-3" className="toggle">
-                <span></span>
-              </label>
+          <div className={`formToolbar ${showExtraOptions ? "show" : ""}`}>
+            <div className="formToggleRow">
+              <div className="checkbox-wrapper-3">
+                <input
+                  type="checkbox"
+                  id="cbx-3"
+                  checked={useDate}
+                  onChange={(e) => {
+                    const next = e.target.checked;
+                    setUseDate(next);
+                    if (!next) setTaskDueDate(null);
+                  }}
+                />
+                <label
+                  htmlFor="cbx-3"
+                  className="toggle"
+                  aria-label="Activar fecha límite"
+                  title="Activar fecha límite"
+                >
+                  <span></span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -210,6 +226,7 @@ function Form() {
                   <SingleSelect
                     options={classOptions}
                     onChange={handleClassChange}
+                    placeholder="Clase / Categoría"
                   />
                 </div>
                 {useDate && (
@@ -223,6 +240,7 @@ function Form() {
                       disabled={!useDate}
                       className="w-full px-4 py-2 rounded-md focus:outline-none dateInput"
                       dateFormat="MMMM d, yyyy h:mmaa"
+                      placeholderText="Elegir fecha..."
                     />
                   </div>
                 )}

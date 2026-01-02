@@ -1,13 +1,18 @@
+export type FirestoreTimestampLike = {
+  seconds: number;
+  nanoseconds: number;
+};
+
 export interface Task {
-    id: any;
+    id: string | undefined;
     TaskName: string;
     TaskDesc: string;
-    TaskStatus: any;
+    TaskStatus: boolean;
     TaskDiff: number;
-    TaskUser:User;
-    TaskDueDate:Date;
+    TaskUser: string;
+    TaskDueDate: Date | FirestoreTimestampLike | null;
     TaskClass:string;
-    TaskDate: any;
+    TaskDate: FirestoreTimestampLike | null | string | number;
     TaskOrder:number;
   }
 

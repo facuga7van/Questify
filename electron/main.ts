@@ -11,14 +11,29 @@ import {
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "fs";
+import os from "node:os";
 import { autoUpdater } from "electron-updater";
 import OpenAI from "openai";
 import { Task } from "../src/Data/Interfaces/taskTypes";
 import dotenv from "dotenv";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import {db} from '../src/Data/firebase';
 
 dotenv.config();
+
+// Evita spam de errores de Chromium en Windows ("Unable to move/create cache", quota DB, GPU cache)
+// cuando el cache queda en una carpeta sin permisos (muy común con OneDrive / locks).
+try {
+  const appData =
+    process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
+  const cacheRoot = path.join(appData, "Questify", "ChromiumCache");
+  fs.mkdirSync(cacheRoot, { recursive: true });
+  app.commandLine.appendSwitch("disk-cache-dir", cacheRoot);
+  app.commandLine.appendSwitch("gpu-disk-cache-dir", path.join(cacheRoot, "GPU"));
+  app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
+} catch (e) {
+  // no-op: si falla, seguimos con el default
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,6 +56,25 @@ let childWindow: BrowserWindow | null;
 let updateCheck = false;
 let updateFound = false;
 
+function resolvePreloadPath() {
+  // En dev/build, vite-plugin-electron suele generar dist-electron/preload.js.
+  // En algunos setups podría ser preload.mjs. Elegimos el que exista.
+  const candidates = [
+    path.join(__dirname, "preload.mjs"),
+    path.join(__dirname, "preload.js"),
+    path.join(__dirname, "preload.cjs"),
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) return p;
+    } catch {
+      // ignore
+    }
+  }
+  // Fallback: lo que esperábamos originalmente
+  return path.join(__dirname, "preload.mjs");
+}
+
 function createWindow() {
   if (win) {
     win.focus();
@@ -56,7 +90,7 @@ function createWindow() {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        preload: path.join(__dirname, "preload.mjs"),
+        preload: resolvePreloadPath(),
       },
     });
 
@@ -132,7 +166,7 @@ ipcMain.on("closeApp", async () => {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          preload: path.join(__dirname, "preload.mjs"),
+          preload: resolvePreloadPath(),
         }  
       });
       childWindow.removeMenu();
@@ -303,11 +337,10 @@ async function getUserData(userId: string): Promise<{ [key: string]: any }> {
         return userData;
       }
     } 
-
-    return [];
+    return {};
   } catch (error) {
     console.error("Error getting user XP:", error);
-    return [];
+    return {};
   }
 }
 async function getTaskClasses(userId: string): Promise<{ [key: string]: any }> {
@@ -351,7 +384,7 @@ function readConfig() {
     return JSON.parse(data);
   } catch (error) {
     console.error("Error reading config file:", error);
-    return { keepTrayActive: true };
+    return { keepTrayActive: true, keepOnTop: false, language: "en" };
   }
 }
 
@@ -444,27 +477,22 @@ ipcMain.on("getCharacter", async (event: Electron.IpcMainEvent, userId:string) =
   }
 });
 
-ipcMain.on("getEmail", async (event: Electron.IpcMainEvent, userName:string) =>{
-  try {
-    const DocRef = doc(collection(db, "questify"), userName);
-    const Snapshot = await getDoc(DocRef);
+ipcMain.handle("resolveEmailFromUsername", async (_event: Electron.IpcMainInvokeEvent, identifier: string) => {
+  const trimmed = (identifier ?? "").trim();
+  if (!trimmed) return null;
+  if (trimmed.includes("@")) return trimmed;
 
-    if (Snapshot.exists()) {
-      const userData = Snapshot.data();
-      if (userData && userData.email) {
-        return userData.email;
-      } else {
-        console.warn("User data missing 'email' field");
-        return 0;
-      }
-    } else {
-      if(1>2){
-        console.log(event)
-      }
-      return null;
-    }
+  try {
+    const usersRef = collection(db, "questify");
+    const q = query(usersRef, where("UserName", "==", trimmed), limit(1));
+    const snapshot = await getDocs(q);
+    const docSnap = snapshot.docs[0];
+    if (!docSnap) return null;
+
+    const data = docSnap.data() as any;
+    return (data.Email ?? data.email ?? null) as string | null;
   } catch (error) {
-    console.error("Error getting task by id:", error);
+    console.error("Error resolving email from username:", error);
     return null;
   }
 });
@@ -500,7 +528,7 @@ ipcMain.on("getConfig", async(event: Electron.IpcMainEvent) =>{
   }
 })
 
-ipcMain.on("setConfig", async(event: Electron.IpcMainEvent, settingName: string, newValue: boolean) =>{
+ipcMain.on("setConfig", async(event: Electron.IpcMainEvent, settingName: string, newValue: any) =>{
   try {
     const config = await readConfig();
     config[settingName] = newValue;
@@ -508,7 +536,10 @@ ipcMain.on("setConfig", async(event: Electron.IpcMainEvent, settingName: string,
     fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
     win?.setAlwaysOnTop(config.keepOnTop, "screen-saver", 1);
     if(settingName === 'language'){
-      win?.webContents.send("changeLang", newValue);
+      const lang = typeof newValue === "string" ? newValue : "en";
+      config.language = lang;
+      fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+      win?.webContents.send("changeLang", lang);
     }
     
   } catch (error) {

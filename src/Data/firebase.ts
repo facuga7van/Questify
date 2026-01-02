@@ -22,7 +22,7 @@ const firebaseConfig = {
   
   const appFs = createFirebaseAdminApp(firebaseConfig);
 
-   const auth =  getAuth();
-   const db =  getFirestore();  
+   const auth =  getAuth(appFs);
+   const db =  getFirestore(appFs);  
 
    export {appFs,db,auth};

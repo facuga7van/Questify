@@ -1,88 +1,281 @@
-.ProfileCont {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 0 auto;
-    padding: 2rem 2rem 2rem 2rem;
-    width: 80%;
-    max-width: 500px;
-    border-radius: 5px;
-  }
-  .ProfileContInner{
-    width: 80%;
-    max-width: 500px;
-    background-color: rgba(0, 0, 0, 0.15);
-    border: 1px solid #795649;
-    border-radius: 2px;
-    box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.3);
-  
-  }
-  .ProfileHeader{
-    display: flex;
-    justify-content: left;
-  }
-  .profile-header {
-    display: flex;
-    align-items: center;
+.ProfilePage {
+  width: 100%;
+  padding: 2rem;
+  padding-top: 1rem; /* deja lugar al header */
+  max-width: 720px;
+}
 
-  }
-  .ProfBtns{
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-  }
-  .backBtn {
-    border: none;
-    background-color: transparent;
-    cursor: pointer;
-    width: 2rem;
-  }
-  
-  .editBtn{
-    border: none;
-    background-color: transparent;
-    cursor: pointer;
-    width: 1.5rem;
-  }
+.ProfileCard {
+  width: 100%;
+  position: relative;
+  background-color: rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(121, 86, 73, 0.55);
+  border-radius: 12px;
+  box-shadow: var(--q-shadow-inset);
+  overflow: hidden;
+}
 
-  .backBtn:hover , .editBtn:hover{
-    transform: scale(1.05);
-transition: all 0.3s ease;
-filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
-  }
+.ProfileCard::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    radial-gradient(900px 420px at 50% 30%, rgba(217,195,163,0.35), transparent 60%),
+    radial-gradient(520px 520px at 50% 62%, rgba(121,86,73,0.10), transparent 65%),
+    repeating-linear-gradient(135deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 8px);
+}
 
-  .profTitleText {
-    font-size: 2rem;
-    font-weight: bold;
-  }
-  
-  .profile-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .profile-info h2 {
-    margin-bottom: 1rem;
-    font-size: 2rem;
-  }
-  .profile-info li:first-child {
-    margin-top: 1rem;
-  }
-  
-  .profile-info li {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-  
-  .profile-info .label {
-    font-weight: bold;
-    margin-right: 1rem;
-    width: 70px;
-  }
-  
-  .profile-info .value {
-    flex-grow: 1;
-  }
+/* Doble borde interno estilo “pergamino enmarcado” */
+.ProfileCard::after{
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 10px;
+  pointer-events: none;
+  border: 1px solid rgba(121,86,73,0.25);
+  box-shadow:
+    inset 0 0 0 1px rgba(215,180,106,0.12);
+}
+
+.profTitleText{
+  font-family: var(--q-font-title);
+  font-size: 2.3rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: rgba(0,0,0,0.75);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+}
+
+.ProfileCardHeader {
+  position: relative;
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.ProfileCardHeader::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 10px;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(215,180,106,0.25), transparent),
+    repeating-linear-gradient(90deg, rgba(121,86,73,0.10) 0 12px, rgba(121,86,73,0.02) 12px 24px);
+  opacity: 0.9;
+}
+
+.ProfileCardTitle {
+  font-family: var(--q-font-title);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(0, 0, 0, 0.70);
+}
+
+.ProfileCardActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.profileActionBtn {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.ProfileCardBody {
+  padding: 1.5rem 1.25rem 1.75rem 1.25rem;
+  position: relative;
+  z-index: 1; 
+}
+
+.ProfileTop{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.ProfileAvatarPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.ProfileAvatarFrame{
+  position: relative;
+  padding: 12px;
+  border-radius: 18px;
+  background:
+    radial-gradient(220px 140px at 40% 30%, rgba(217,195,163,0.45), rgba(192,160,128,0.22) 60%, rgba(0,0,0,0.06) 100%);
+  border: 2px solid rgba(121,86,73,0.50);
+  box-shadow: 0 14px 26px rgba(0,0,0,0.18), var(--q-shadow-inset);
+}
+
+.ProfileAvatarFrame::before,
+.ProfileAvatarFrame::after{
+  content:"";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid rgba(215,180,106,0.55);
+  opacity: 0.85;
+}
+.ProfileAvatarFrame::before{ top: 6px; left: 6px; border-right: none; border-bottom: none; }
+.ProfileAvatarFrame::after{ bottom: 6px; right: 6px; border-left: none; border-top: none; }
+
+.ProfileAvatarFrame .CharCont{
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ProfileCard.is-editing::after{
+  opacity: 0.55;
+}
+
+.ProfileAvatarFrame.is-editing{
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.ProfileAvatarFrame.is-editing::before,
+.ProfileAvatarFrame.is-editing::after{
+  opacity: 0;
+}
+.ProfileAvatarFrame.is-editing .CharCont{
+  border-radius: 0;
+  overflow: visible;
+}
+
+.ProfileCard.is-editing .SelGroup{
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0.35rem 0;
+}
+.ProfileCard.is-editing .SelRow{
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(121, 86, 73, 0.18);
+}
+.ProfileCard.is-editing .SelRow:last-of-type{
+  border-bottom: none;
+}
+.ProfileCard.is-editing .SelArrow{
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.04);
+  box-shadow: none;
+}
+.ProfileCard.is-editing .SelArrow:hover{
+  background: rgba(0,0,0,0.08);
+  filter: none;
+}
+.ProfileCard.is-editing .SelFooter{
+  padding-top: 0.9rem;
+}
+
+.ProfileAvatarEditor {
+  width: 100%;
+}
+
+.ProfileEditHeader{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.ProfileEditTitle{
+  font-family: var(--q-font-title);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(0,0,0,0.74);
+}
+
+.ProfileEditHint{
+  font-family: var(--q-font-ui);
+  font-size: 1.0rem;
+  color: rgba(0,0,0,0.58);
+}
+
+.ProfileDivider{
+  width: min(300px, 70%);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(121,86,73,0.35), transparent);
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.ProfileDivider::before{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: rgba(215,180,106,0.35);
+  border: 1px solid rgba(121,86,73,0.35);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+.ProfileMeta{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.ProfileName{
+  font-family: var(--q-font-title);
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: rgba(0,0,0,0.78);
+  line-height: 1.1;
+  word-break: break-word;
+}
+
+.ProfileEmail{
+  font-family: var(--q-font-ui);
+  font-size: 1.1rem;
+  color: rgba(0,0,0,0.60);
+  word-break: break-word;
+}
+
+.backBtn {
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  width: 2rem;
+  padding: 0;
+  opacity: 0.85;
+  transition: transform 120ms ease, filter 120ms ease, opacity 120ms ease;
+}
+.backBtn:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.25));
+}
+
+@media (max-width: 640px) {
+  .ProfilePage { padding: 1.25rem; padding-top: 7rem; }
+  .ProfileCardBody { padding: 1.25rem 1rem 1.4rem 1rem; }
+}
   

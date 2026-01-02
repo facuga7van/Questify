@@ -4,12 +4,12 @@
     min-height: 40px;
     height: auto;
     overflow: visible;
-    background-color: rgba(0, 0, 0, 0.2);
-    color: white;
+    background-color: var(--q-panel-2);
+    color: rgba(255, 255, 255, 0.92);
   }
   
   .basic-single .select__menu {
-    z-index: 9999; /* Alta prioridad */
+    z-index: 10;
     max-height: 200px; /* Ajusta según sea necesario */
     overflow-y: auto;
     background-color: rgba(0, 0, 0, 0);
@@ -23,6 +23,7 @@
   .basic-single .select__single-value {
     margin-left: 2px;
     margin-right: 2px;
+    color: rgba(255, 255, 255, 0.92);
 
   }
   
@@ -39,6 +40,7 @@
   
   .basic-single .select__option {
     padding: 8px 10px;
+    color: var(--q-ink);
 
   }
   
@@ -61,8 +63,12 @@
     z-index: 1;
     background-color: rgba(0, 0, 0, 0);
   }
+  /* NO styles globales a input: rompía otros formularios */
 
-  input{
+  .selectInlineInput{
     background-color: rgba(0, 0, 0, 0);
-    color: white;
+    color: rgba(255, 255, 255, 0.92);
+    outline: none;
+    border: none;
+    width: 100%;
   }

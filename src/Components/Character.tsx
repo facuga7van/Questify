@@ -11,10 +11,9 @@ import frontHairPng from "/frontHairs.png";
 import rearHairFrontPng from "/rearHairsFront.png";
 import rearHairBackPng from "/rearHairsBack.png";
 
-import { IpcRendererEvent } from "electron";
-
 import "../Styles/Pixi.css";
 import { useAuth } from "@/AuthContext";
+import { subscribeUserDoc } from "@/Data/firestore";
 
 const PixiCharacter: React.FC = () => {
   const pixiContainerRef = useRef<HTMLDivElement>(null);
@@ -22,58 +21,49 @@ const PixiCharacter: React.FC = () => {
   const rearHairBackSpriteRef = useRef<Sprite | null>(null);
   const rearHairFrontSpriteRef = useRef<Sprite | null>(null);
   const frontHairSpriteRef = useRef<Sprite | null>(null);
-  const ipcRenderer = (window as any).ipcRenderer;
   const { currentUser } = useAuth();
-  const [getCharData, setGetCharData] = useState(false);
-  const [charData, setCharData] = useState<any>();
+  const getDefaultCharData = () => ({
+    backHairIndex: 1,
+    frontColorIndex: 1,
+    backColorIndex: 1,
+    frontHairIndex: 1,
+  });
 
-  useEffect(() => {
-    const handleCharData = (event: IpcRendererEvent, charData: any) => {
-      if (1 > 2) {
-        console.log(event);
-      }
-      if (!charData || charData === undefined || charData.length == 0) {
-        localStorage.setItem(
-          "charData",
-          JSON.stringify({
-            backHairIndex: 1,
-            frontColorIndex: 1,
-            backColorIndex: 1,
-            frontHairIndex: 1,
-          })
-        );
-      } else {
-        localStorage.setItem("charData", JSON.stringify(charData));
-        loadBackHairSprite(charData.backHairIndex, charData.backColorIndex);
-        loadFrontHairSprite(charData.frontHairIndex, charData.frontColorIndex);
-        setGetCharData(false);
-      }
-      setCharData(localStorage.getItem("charData"));
-      console.log(charData)
-    };
-    if (getCharData) {
-      ipcRenderer.send("getCharacter", currentUser?.uid);
+  const [charData, setCharData] = useState<any>(() => {
+    const cached = localStorage.getItem("charData");
+    try {
+      return cached ? JSON.parse(cached) : getDefaultCharData();
+    } catch {
+      return getDefaultCharData();
     }
-    ipcRenderer.on("sendCharData", handleCharData);
-    return () => {
-      ipcRenderer.removeAllListeners("sendCharData", handleCharData);
-    };
-  }, [getCharData]);
+  });
+
+  const [backHairIndex, setBackHairIndex] = useState<number>(charData.backHairIndex ?? 1);
+  const [frontColorIndex, setFrontColorIndex] = useState<number>(charData.frontColorIndex ?? 1);
+  const [backColorIndex, setBackColorIndex] = useState<number>(charData.backColorIndex ?? 1);
+  const [frontHairIndex, setFrontHairIndex] = useState<number>(charData.frontHairIndex ?? 1);
 
   useEffect(() => {
-    console.log(nose);
-    setGetCharData(true);
-  }, []);
+    const uid = currentUser?.uid;
+    if (!uid) return;
 
-  
-  const [backHairIndex] = useState(1);
-  const [frontColorIndex] = useState(1);
-  const [backColorIndex] = useState(1);
-  const [frontHairIndex] = useState(1);
-  // const [backHairIndex] = useState(charData.backHairIndex);
-  // const [frontColorIndex] = useState(charData.frontColorIndex);
-  // const [backColorIndex] = useState(charData.backColorIndex);
-  // const [frontHairIndex] = useState(charData.frontHairIndex);
+    const unsub = subscribeUserDoc(uid, (data) => {
+      const remote = data?.characterData;
+      const next = remote && typeof remote === "object" ? remote : getDefaultCharData();
+      localStorage.setItem("charData", JSON.stringify(next));
+      setCharData(next);
+    });
+
+    return () => unsub();
+  }, [currentUser?.uid]);
+
+  useEffect(() => {
+    // sincroniza índices cuando llega charData
+    setBackHairIndex(Number(charData?.backHairIndex ?? 1));
+    setFrontColorIndex(Number(charData?.frontColorIndex ?? 1));
+    setBackColorIndex(Number(charData?.backColorIndex ?? 1));
+    setFrontHairIndex(Number(charData?.frontHairIndex ?? 1));
+  }, [charData]);
 
   useEffect(() => {
     if (!appRef.current) {
@@ -127,20 +117,28 @@ const PixiCharacter: React.FC = () => {
         spNose.x = app.screen.width / 2;
         spNose.y = app.screen.height / 2;
 
-        loadBackHairSprite(charData.backHairIndex, charData.backColorIndex);
-        loadFrontHairSprite(charData.frontHairIndex, charData.frontColorIndex);
+        loadAllHair(
+          charData.backHairIndex,
+          charData.backColorIndex,
+          charData.frontHairIndex,
+          charData.frontColorIndex
+        );
       })();
     }
   }, []);
 
-  const loadBackHairSprite = async (index1: number, index2: number) => {
-    if (!appRef.current) {
-      console.error("App not initialized");
-      return;
-    }
-    let rearHairBackSpritesheet;
-    let rearHairFrontSpritesheet;
-    if (appRef.current) {
+  const [loadingHair, setLoadingHair] = useState(true);
+  const isInitialLoadRef = useRef(true);
+  const isLoadingRef = useRef(false);
+
+  const loadAllHair = async (bIndex: number, bColor: number, fIndex: number, fColor: number) => {
+    if (!appRef.current || isLoadingRef.current) return;
+    isLoadingRef.current = true;
+    setLoadingHair(true);
+
+    try {
+      // ... limpieza ...
+      // Limpieza garantizada antes de cargar nada nuevo
       if (rearHairBackSpriteRef.current) {
         appRef.current.stage.removeChild(rearHairBackSpriteRef.current);
         rearHairBackSpriteRef.current.destroy();
@@ -151,7 +149,16 @@ const PixiCharacter: React.FC = () => {
         rearHairFrontSpriteRef.current.destroy();
         rearHairFrontSpriteRef.current = null;
       }
+      if (frontHairSpriteRef.current) {
+        appRef.current.stage.removeChild(frontHairSpriteRef.current);
+        frontHairSpriteRef.current.destroy();
+        frontHairSpriteRef.current = null;
+      }
 
+      // Carga Back Hair
+      let rearHairBackSpritesheet;
+      let rearHairFrontSpritesheet;
+      
       if (!Assets.cache.has("rearHairBack")) {
         const sheetTextureRearBack = await Assets.load(rearHairBackPng);
         Assets.add({
@@ -159,10 +166,9 @@ const PixiCharacter: React.FC = () => {
           src: "rearHairBack.json",
           data: { texture: sheetTextureRearBack },
         });
-        rearHairBackSpritesheet = await Assets.load("rearHairBack");
-      } else {
-        rearHairBackSpritesheet = await Assets.load("rearHairBack");
       }
+      rearHairBackSpritesheet = await Assets.load("rearHairBack");
+
       if (!Assets.cache.has("rearHairFront")) {
         const sheetTextureRearFront = await Assets.load(rearHairFrontPng);
         Assets.add({
@@ -170,118 +176,81 @@ const PixiCharacter: React.FC = () => {
           src: "rearHairFront.json",
           data: { texture: sheetTextureRearFront },
         });
-        rearHairFrontSpritesheet = await Assets.load("rearHairFront");
-      } else {
-        rearHairFrontSpritesheet = await Assets.load("rearHairFront");
       }
+      rearHairFrontSpritesheet = await Assets.load("rearHairFront");
 
-      const frameBackName = `rearHairBack${index1}-${index2}`;
-      const frameFrontName = `rearHairFront${index1}-${index2}`;
+      const frameBackName = `rearHairBack${bIndex}-${bColor}`;
+      const frameFrontName = `rearHairFront${bIndex}-${bColor}`;
+
       if (frameBackName in rearHairBackSpritesheet.textures) {
-        const cacheTextureRearBack = Assets.cache.get(frameBackName);
-        const cacheTextureRearFront = Assets.cache.get(frameFrontName);
-        const rearHairBackTexture =
-          cacheTextureRearBack ||
-          rearHairBackSpritesheet.textures[
-            frameBackName as keyof typeof rearHairBackSpritesheet.textures
-          ];
-        const rearHairFrontTexture =
-          cacheTextureRearFront ||
-          rearHairFrontSpritesheet.textures[
-            frameFrontName as keyof typeof rearHairFrontSpritesheet.textures
-          ];
-
-        const rearHairBackSprite = new Sprite(rearHairBackTexture);
+        const rearHairBackSprite = new Sprite(rearHairBackSpritesheet.textures[frameBackName]);
         rearHairBackSprite.anchor.set(0.5, 0.5);
         rearHairBackSprite.x = appRef.current.screen.width / 2;
         rearHairBackSprite.y = appRef.current.screen.height / 2;
-
         appRef.current.stage.addChildAt(rearHairBackSprite, 0);
         rearHairBackSpriteRef.current = rearHairBackSprite;
 
-        const rearHairFrontSprite = new Sprite(rearHairFrontTexture);
+        const rearHairFrontSprite = new Sprite(rearHairFrontSpritesheet.textures[frameFrontName]);
         rearHairFrontSprite.anchor.set(0.5, 0.5);
         rearHairFrontSprite.x = appRef.current.screen.width / 2;
         rearHairFrontSprite.y = appRef.current.screen.height / 2;
-
         appRef.current.stage.addChildAt(rearHairFrontSprite, 0);
         rearHairFrontSpriteRef.current = rearHairFrontSprite;
       }
-      if (rearHairBackSpriteRef.current) {
-        appRef.current.stage.setChildIndex(rearHairBackSpriteRef.current, 0);
-      }
-      if (rearHairFrontSpriteRef.current) {
-        appRef.current.stage.setChildIndex(
-          rearHairFrontSpriteRef.current,
-          appRef.current.stage.children.length - 2
-        );
-      }
-    }
-  };
 
-  const loadFrontHairSprite = async (index1: number, index2: number) => {
-    if (!appRef.current) {
-      console.error("App not initialized");
-      return;
-    }
-
-    let sheetTextureFront;
-    let frontHairSpritesheet;
-    console.log(index1);
-    if (appRef.current) {
-      if (frontHairSpriteRef.current) {
-        appRef.current.stage.removeChild(frontHairSpriteRef.current);
-        frontHairSpriteRef.current.destroy();
-        frontHairSpriteRef.current = null;
-      }
-
+      // Carga Front Hair
+      let frontHairSpritesheet;
       if (!Assets.cache.has("frontHair")) {
-        sheetTextureFront = await Assets.load(frontHairPng);
+        const sheetTextureFront = await Assets.load(frontHairPng);
         Assets.add({
           alias: "frontHair",
           src: "frontHair.json",
           data: { texture: sheetTextureFront },
         });
-        frontHairSpritesheet = await Assets.load("frontHair");
-      } else {
-        frontHairSpritesheet = await Assets.load("frontHair");
       }
+      frontHairSpritesheet = await Assets.load("frontHair");
 
-      const frameName = `fronthair${index1}-${index2}`;
+      const frameName = `fronthair${fIndex}-${fColor}`;
       if (frameName in frontHairSpritesheet.textures) {
-        const frontHairTexture =
-          frontHairSpritesheet.textures[
-            frameName as keyof typeof frontHairSpritesheet.textures
-          ];
-
-        const frontHairSprite = new Sprite(frontHairTexture);
+        const frontHairSprite = new Sprite(frontHairSpritesheet.textures[frameName]);
         frontHairSprite.anchor.set(0.5, 0.5);
         frontHairSprite.x = appRef.current.screen.width / 2;
         frontHairSprite.y = appRef.current.screen.height / 2;
-
         appRef.current.stage.addChild(frontHairSprite);
         frontHairSpriteRef.current = frontHairSprite;
-      } else {
-        console.error(`Hair frame "${frameName}" not found in textures`);
       }
-      if (frontHairSpriteRef.current) {
-        appRef.current.stage.setChildIndex(
-          frontHairSpriteRef.current,
-          appRef.current.stage.children.length - 1
-        );
-      }
+
+      // Ajuste final de z-index
+      if (rearHairBackSpriteRef.current) appRef.current.stage.setChildIndex(rearHairBackSpriteRef.current, 0);
+      if (rearHairFrontSpriteRef.current) appRef.current.stage.setChildIndex(rearHairFrontSpriteRef.current, appRef.current.stage.children.length - 2);
+      if (frontHairSpriteRef.current) appRef.current.stage.setChildIndex(frontHairSpriteRef.current, appRef.current.stage.children.length - 1);
+
+    } catch (e) {
+      console.error("Error loading character hair:", e);
+    } finally {
+      isLoadingRef.current = false;
+      isInitialLoadRef.current = false;
+      setLoadingHair(false);
     }
   };
 
   useEffect(() => {
-    loadBackHairSprite(backHairIndex, backColorIndex);
-  }, [backHairIndex, backColorIndex]);
+    loadAllHair(backHairIndex, backColorIndex, frontHairIndex, frontColorIndex);
+  }, [backHairIndex, backColorIndex, frontHairIndex, frontColorIndex]);
 
-  useEffect(() => {
-    loadFrontHairSprite(frontHairIndex, frontColorIndex);
-  }, [frontHairIndex, frontColorIndex]);
-
-  return <div className="CharCont" ref={pixiContainerRef} />;
+  return (
+    <div className="CharCont relative">
+      {loadingHair && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#c0a080] z-10">
+          <div className="w-6 h-6 border-2 border-[#795649] border-t-white animate-spin rounded-full"></div>
+        </div>
+      )}
+      <div 
+        ref={pixiContainerRef} 
+        style={{ visibility: loadingHair ? 'hidden' : 'visible' }} 
+      />
+    </div>
+  );
 };
 
 export default PixiCharacter;

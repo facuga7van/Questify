@@ -6,6 +6,7 @@ export interface Option {
 export interface Props {
   options: Option[];
   onChange: (selectedOption: Option | null) => void;
+  placeholder?: string;
 }
 
 export interface State {

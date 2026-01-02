@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Tu esquema actual:
+    // - /questify/{uid}                         (doc con Email/UserName/currentXp/characterData)
+    // - /questify/{uid}/tasks/{taskId}          (subcolección)
+    // - /questify/{uid}/taskClasses/{classId}   (subcolección)
+    match /questify/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /tasks/{taskId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /taskClasses/{classId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+  }
+}
+
+

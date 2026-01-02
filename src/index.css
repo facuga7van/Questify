@@ -1,3 +1,71 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   Questify Theme Tokens (RPG / medieval)
+   ========================================================= */
+:root {
+  --q-ink: #1b1410;
+  --q-ink-soft: rgba(0, 0, 0, 0.70);
+  --q-parchment: #c0a080;
+  --q-parchment-2: #d9c3a3;
+  --q-wood: #795649;
+  --q-wood-dark: #5e4035;
+  --q-wood-deep: #412e27;
+  --q-gold: #d7b46a;
+
+  --q-panel: rgba(0, 0, 0, 0.15);
+  --q-panel-2: rgba(0, 0, 0, 0.20);
+  --q-border: rgba(121, 86, 73, 0.85);
+  --q-shadow-inset: inset 0px 0px 14px rgba(0, 0, 0, 0.30);
+  --q-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+
+  --q-font-title: "Cinzel", serif;
+  --q-font-body: "IM Fell DW Pica", serif;
+  --q-font-ui: "Crimson Pro", serif;
+}
+
+@layer base {
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    background-image: url('./Assets/bg.jpg');
+    background-size: 40rem 40rem;
+    background-position: center;
+    background-repeat: repeat;
+    background-attachment: fixed;
+    font-family: var(--q-font-body);
+    color: var(--q-ink-soft);
+    overflow-y: hidden;
+    margin: 0;
+  }
+
+  ::selection {
+    background: rgba(215, 180, 106, 0.35);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--q-gold);
+    outline-offset: 2px;
+  }
+}
+
+/* Scrollbar (desktop vibe) */
+*::-webkit-scrollbar {
+  width: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.10);
+  border-left: 1px solid rgba(121, 86, 73, 0.35);
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(121, 86, 73, 0.75);
+  border: 1px solid rgba(192, 160, 128, 0.6);
+  border-radius: 10px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(94, 64, 53, 0.85);
+}

@@ -6,9 +6,9 @@ import { doSignInWithEmailAndPassword } from "../../Data/auth";
 import { useAuth } from "../../AuthContext/index";
 import "../../Styles/Login.css";
 import { useTranslation } from "react-i18next";
+import { resolveEmailFromUsername } from "@/Data/firestore";
 const Login = () => {
   const { userLoggedIn } = useAuth();
-  const ipcRenderer = (window as any).ipcRenderer;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -18,10 +18,20 @@ const Login = () => {
   const onSubmit = async (e: any) => {
     e.preventDefault();
     if (!isSigningIn) {
-      ipcRenderer.send("getEmail", email);
       setIsSigningIn(true);
       try{
-        await doSignInWithEmailAndPassword(email, password);
+        const identifier = email.trim();
+        const resolvedEmail = identifier.includes("@")
+          ? identifier
+          : await resolveEmailFromUsername(identifier);
+
+        if (!resolvedEmail) {
+          setErrorMessage("Usuario no encontrado (probá iniciar con tu email)");
+          setIsSigningIn(false);
+          return;
+        }
+
+        await doSignInWithEmailAndPassword(resolvedEmail, password);
       }catch(e){
         setErrorMessage('Incorrect password or email')
         setIsSigningIn(false)
@@ -54,7 +64,7 @@ const Login = () => {
             <div>
               <label className="label">{t('emailuser')}</label>
               <input
-                type="email"
+                type="text"
                 autoComplete="email"
                 required
                 value={email}

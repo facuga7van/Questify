@@ -1,10 +1,10 @@
 #taskList {
   height: calc(70vh - 8rem); 
   overflow-y: auto;
-  background-color: rgba(0, 0, 0, 0.15);
-  border: 1px solid #795649;
-  border-radius: 2px;
-  box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.3);
+  background-color: var(--q-panel);
+  border: 1px solid var(--q-border);
+  border-radius: 6px;
+  box-shadow: var(--q-shadow-inset);
 }
 
 
@@ -23,7 +23,7 @@
 .tabs{
   text-align: center;
   display: flex;
-  background-color: rgba(0, 0, 0, 0.15);
+  background-color: rgba(0, 0, 0, 0.12);
   font-size: 1.2rem;
   font-weight: bold;
   height: 2.5rem;
@@ -39,7 +39,7 @@
 }
 .tabBtn{
  
-  border-bottom: 2px solid #795649;
+  border-bottom: 2px solid rgba(121, 86, 73, 0.6);
   width: 30%;
   transition: all 0.3s ease;
   
@@ -52,8 +52,9 @@
 }
 
 .tabs .tab.active {
-  filter: drop-shadow(3px 3px 4px rgba(0, 0, 0, 0.5)) ;
-  border-bottom: 2px solid #795649;
+  filter: drop-shadow(3px 3px 4px rgba(0, 0, 0, 0.35)) ;
+  border-bottom: 2px solid rgba(215, 180, 106, 0.85);
+  color: rgba(0, 0, 0, 0.75);
 }
 /* -------------------------- */
 /*        DROPDOWN MENU       */
@@ -65,15 +66,15 @@
   
 }
 .MuiMenu-paper{
-  background-color: red;
-
+  background-color: transparent !important;
 }
 .MuiList-root {
   width: 15rem;
   height: fit-content;
   color: #333; /* Cambia el color del texto */
-  background-color: #c0a080;
-  border: 1px solid #795649;
+  background-color: var(--q-parchment);
+  border: 1px solid var(--q-border);
+  box-shadow: var(--q-shadow);
   
 }
 .MuiMenuItem-gutters{
@@ -127,6 +128,10 @@
   min-height: 2rem;
   margin: 0 1rem;
   border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.taskContainer:hover {
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
 .taskContainerFinished {
@@ -156,6 +161,7 @@
   overflow: hidden;
   font-size: 1.5rem;
   text-overflow: ellipsis;
+  font-family: var(--q-font-ui);
 }
 
 .taskDesc {

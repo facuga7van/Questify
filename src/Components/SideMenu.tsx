@@ -6,8 +6,8 @@ import { doSignOut } from "@/Data/auth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOut } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
-import { IpcRendererEvent } from "electron";
 import { useAuth } from "@/AuthContext";
+import { subscribeUserDoc } from "@/Data/firestore";
 
 export default function SideMenu() {
   const [showSidebar, setShowSidebar] = useState(false);
@@ -16,30 +16,22 @@ export default function SideMenu() {
   const ipcRenderer = (window as any).ipcRenderer;
   const { currentUser } = useAuth();
   const [userData, setUserData] = useState<any>(null);
-  const [getUserData, setGetUserData] = useState(false);
 
   useEffect(() => {
-    const handleUserData = (event: IpcRendererEvent, userData: any) => {
-      if (1 > 2) {
-        console.log(event);
-      }
-      localStorage.setItem("userData", JSON.stringify(userData));
-      setGetUserData(false);
-      setUserData(JSON.parse(localStorage.getItem("userData") || '{}'));
-    };
+    const uid = currentUser?.uid;
+    if (!uid) return;
 
-    if (getUserData) {
-      ipcRenderer.send("getUserData", currentUser?.uid);
-    }
-    ipcRenderer.on("sendUserData", handleUserData);
-    return () => {
-      ipcRenderer.removeAllListeners("sendUserData", handleUserData);
-    };
-  }, [getUserData]);
-
-  useEffect(() => {
-    setGetUserData(true);
-  }, []);
+    const unsub = subscribeUserDoc(uid, (raw) => {
+      const normalized = {
+        ...(raw ?? {}),
+        userName: raw?.UserName ?? raw?.userName ?? "",
+        email: raw?.Email ?? raw?.email ?? "",
+      };
+      localStorage.setItem("userData", JSON.stringify(normalized));
+      setUserData(normalized);
+    });
+    return () => unsub();
+  }, [currentUser?.uid]);
 
   const handleProfileClick = () => {
     navigate("/profile");
@@ -52,8 +44,8 @@ export default function SideMenu() {
   return (
     <>
       <div
-        onMouseEnter={() => setShowSidebar(!showSidebar)}
-        onMouseLeave={() => setShowSidebar(!showSidebar)}
+        onMouseEnter={() => setShowSidebar(true)}
+        onMouseLeave={() => setShowSidebar(false)}
       >
         <div className={`PixiCont ${showSidebar ? "PixiCont--active" : ""}`}>
           <PixiCharacter />
@@ -68,7 +60,7 @@ export default function SideMenu() {
         >
           <div className="SideMenuContent">
             <div className="UserName">
-              <h2>{userData ? userData.UserName : 'Cargando...'}</h2>
+              <h2>{userData ? (userData.userName ?? userData.UserName) : 'Cargando...'}</h2>
             </div>
             <ul className="SideMenuUl">
               <li>

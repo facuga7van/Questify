@@ -1,57 +1,39 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import "../Styles/ProgressBar.css";
-import type { IpcRendererEvent } from "../../electron/preload";
 import { useAuth } from "../AuthContext/index";
+import { subscribeUserDoc } from "@/Data/firestore";
 
 
 export default function Progressbar() {
-  const ipcRenderer = (window as any).ipcRenderer;
-const [level, setLevel] = useState(0);
-const [filled, setFilled] = useState(0);
-const [getXp, setGetXp] = useState(false);
-const [userData, setUserData] = useState<any>(() => {
-  const userData = localStorage.getItem("userData");
-return userData ? JSON.parse(userData) : [];
-});
-const { currentUser } = useAuth();
+  const [level, setLevel] = useState(0);
+  const [filled, setFilled] = useState(0);
+  const [userData, setUserData] = useState<any>(() => {
+    const userData = localStorage.getItem("userData");
+    return userData ? JSON.parse(userData) : {};
+  });
+  const { currentUser } = useAuth();
 
-useEffect(() => {
-  const handleXPChange = (event: IpcRendererEvent, newXP: number) => {
-    if(1>2){
-      console.log(event);
-        setUserData(true)
-    }
-    const calculatedLevel = newXP / 100;
-    setLevel(Math.floor(calculatedLevel));
-    userData.level = Math.floor(calculatedLevel);
-    localStorage.setItem("userData", JSON.stringify(userData));
-    const levelPercentage = calculatedLevel - Math.floor(calculatedLevel);
-    setFilled(levelPercentage * 100);
-    setGetXp(false);
-  };
+  useEffect(() => {
+    const uid = currentUser?.uid;
+    if (!uid) return;
 
-  // Request XP on initial render and listen for changes
-  ipcRenderer.send("getXP", currentUser?.uid);
-  ipcRenderer.on("sendXP", handleXPChange);
+    const unsub = subscribeUserDoc(uid, (data) => {
+      const xp = Number(data?.currentXp ?? 0);
+      const calculatedLevel = xp / 100;
+      setLevel(Math.floor(calculatedLevel));
 
-  // Cleanup function to remove listener on unmount
-  return () => ipcRenderer.removeAllListeners("sendXP", handleXPChange);
-}, [getXp]);
+      setUserData((prev: any) => {
+        const next = { ...(prev ?? {}), level: Math.floor(calculatedLevel) };
+        localStorage.setItem("userData", JSON.stringify(next));
+        return next;
+      });
 
-// Handle taskAdded event to trigger XP retrieval (optional)
-useEffect(() => {
-  const XPChange = (event: IpcRendererEvent) => {
-    setGetXp(true);
-    if(1>2){
-      console.log(event);
-    }
-  };
+      const levelPercentage = calculatedLevel - Math.floor(calculatedLevel);
+      setFilled(levelPercentage * 100);
+    });
 
-  ipcRenderer.on("taskAdded", XPChange);
-
-  // Cleanup function to remove listener on unmount
-  return () => ipcRenderer.removeAllListeners("taskAdded", XPChange);
-}, []);
+    return () => unsub();
+  }, [currentUser?.uid]);
 
 
   return (

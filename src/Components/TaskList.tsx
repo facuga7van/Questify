@@ -9,6 +9,14 @@ import { useTranslation } from "react-i18next";
 import i18n from "@/Data/i18n";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import {
+  deleteTasks,
+  incrementUserXp,
+  setTaskStatus,
+  subscribeTaskClasses,
+  subscribeTasks,
+  syncTaskOrders,
+} from "@/Data/firestore";
+import {
   MenuItem,
   Select,
   FormControl,
@@ -20,36 +28,18 @@ import {
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 // import SortIcon from '@mui/icons-material/Sort';
 
-function TaskList() {
-  const ipcRenderer = (window as any).ipcRenderer;
+type Props = {
+  onEditTask: (task: Task) => void;
+};
+
+function TaskList({ onEditTask }: Props) {
+  const ipcRenderer = (window as any).ipcRenderer; // solo para idioma/config (Electron)
   const { currentUser } = useAuth();
   const { t } = useTranslation();
 
-  const [taskList, setTasks] = useState<Task[]>(() => {
-    const savedTasks = localStorage.getItem("taskListPnd");
-    return savedTasks
-      ? JSON.parse(savedTasks)
-      : [
-          {
-            id: undefined,
-            TaskName: "Loading tasks...",
-            TaskDesc: "",
-            TaskDueDate: new Date(0),
-            TaskClass: "",
-            TaskStatus: false,
-            TaskDiff: 0,
-            TaskUser: { uid: "", displayName: null, email: null },
-            TaskDate: "",
-            TaskOrder: 0,
-          },
-        ];
-  });
-
   const [tasksToDelete, setTasksToDelete] = useState<string[]>([]);
-  const [getTasks, setGetTasks] = useState(false);
   const [showDetail, setShowDetail] = useState<{ [key: string]: boolean }>({});
   const [activeTab, setActiveTab] = useState("pending");
-  const [getXp, setGetXp] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [classOptions, setClassOptions] = useState<string[]>([]);
   const [pendingTasks, setPendingTasks] = useState<Task[]>(() => {
@@ -76,46 +66,28 @@ function TaskList() {
   };
 
   useEffect(() => {
-    setGetTasks(true);
-  }, []);
+    const uid = currentUser?.uid;
+    if (!uid) return;
 
-  useEffect(() => {
-    setGetXp(true);
-  }, []);
+    const unsub = subscribeTasks(uid, (tasks) => {
+      const completed = tasks.filter((task) => task.TaskStatus === true);
+      const pending = tasks
+        .filter((task) => task.TaskStatus === false)
+        .sort((a, b) => (a.TaskOrder ?? 0) - (b.TaskOrder ?? 0));
 
-  useEffect(() => {
-    const handleShowTasks = (event: IpcRendererEvent, tasks: Task[]) => {
-      if (1 > 2) {
-        console.log(event);
-        console.log(getXp);
-        console.log(taskList, setTasks);
-      }
-      setCompletedTasks(tasks.filter((task) => task.TaskStatus === true));
-      console.log(tasks);
-      setPendingTasks(
-        tasks
-          .filter((task) => task.TaskStatus === false)
-          .sort((a, b) => a.TaskDate - b.TaskDate)
-      );
+      setCompletedTasks(completed);
+      setPendingTasks(pending);
+      localStorage.setItem("taskListPnd", JSON.stringify(pending));
+    });
 
-      localStorage.setItem("taskListPnd", JSON.stringify(pendingTasks));
-      setGetTasks(false);
-    };
-
-    if (getTasks) {
-      ipcRenderer.send("getTasks", currentUser?.uid);
-    }
-
-    ipcRenderer.on("showTasks", handleShowTasks);
-
-    return () => {
-      ipcRenderer.removeAllListeners("showTasks", handleShowTasks);
-    };
-  }, [getTasks]);
+    return () => unsub();
+  }, [currentUser?.uid]);
 
   const handleDeleteBtnClick = () => {
+    const uid = currentUser?.uid;
+    if (!uid) return;
     if (tasksToDelete.length > 0) {
-      ipcRenderer.send("deleteTask", tasksToDelete, currentUser?.uid);
+      deleteTasks(uid, tasksToDelete).then(() => setTasksToDelete([]));
     }
   };
 
@@ -154,48 +126,34 @@ function TaskList() {
     }
   };
 
-  const handleEditBtnClick = async (task: Task) => {
-    try {
-      await ipcRenderer.send("editTask", task.id, currentUser?.uid);
-    } catch (error) {
-      console.error("Error sending edit request:", error);
-    }
-  };
-
   const handleCompleteBtnClick = async (task: Task) => {
-    try {
-      await ipcRenderer.send("changeStatusTask", task.id, currentUser?.uid);
+    const uid = currentUser?.uid;
+    if (!uid || !task.id) return;
 
-      const updatedTasksPnd = pendingTasks;
-      const updatedTasksCnf = completedTasks;
-      task.TaskStatus = !task.TaskStatus;
-      if (!task.TaskStatus) {
-        updatedTasksPnd.push(task);
-        setPendingTasks(updatedTasksPnd);
-        setCompletedTasks(updatedTasksCnf.filter((t) => t.id !== task.id));
-      } else {
-        updatedTasksCnf.push(task);
-        setCompletedTasks(updatedTasksCnf);
-        setPendingTasks(updatedTasksPnd.filter((t) => t.id !== task.id));
+    try {
+      const toggled: Task = { ...task, TaskStatus: !task.TaskStatus };
+      setPendingTasks((prev) =>
+        toggled.TaskStatus
+          ? prev.filter((t) => t.id !== task.id)
+          : [...prev.filter((t) => t.id !== task.id), toggled]
+      );
+      setCompletedTasks((prev) =>
+        toggled.TaskStatus
+          ? [...prev.filter((t) => t.id !== task.id), toggled]
+          : prev.filter((t) => t.id !== task.id)
+      );
+
+      const xpToAdd = toggled.TaskStatus ? toggled.TaskDiff * 7 : -toggled.TaskDiff * 7;
+      setXpGained(xpToAdd);
+
+      await setTaskStatus(uid, task.id, toggled.TaskStatus);
+      if (xpToAdd !== 0) {
+        await incrementUserXp(uid, xpToAdd);
       }
     } catch (error) {
       console.error("Error sending edit request:", error);
     }
   };
-
-  const handleEditTask = async (event: IpcRendererEvent) => {
-    setGetTasks(true);
-    if (1 > 2) {
-      console.log(event);
-    }
-  };
-
-  useEffect(() => {
-    ipcRenderer.on("taskAdded", handleEditTask);
-    return () => {
-      ipcRenderer.removeAllListeners("taskAdded");
-    };
-  }, []);
 
   const handleLang = async (event: IpcRendererEvent, lang: string) => {
     i18n.changeLanguage(lang);
@@ -208,7 +166,7 @@ function TaskList() {
     ipcRenderer.on("changeLang", handleLang);
 
     return () => {
-      ipcRenderer.removeAllListeners("changeLang");
+      ipcRenderer.off("changeLang", handleLang);
     };
   }, []);
 
@@ -218,26 +176,11 @@ function TaskList() {
   const expAlertRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleXPChange = (event: IpcRendererEvent, newXpGained: number) => {
-      if (1 > 2) {
-        console.log(event);
-      }
-      if (typeof newXpGained === "number") {
-        setXpGained(newXpGained);
-        setGetXp(false);
-      } else {
-        console.error("Received invalid XP value:", newXpGained);
-      }
-    };
-    ipcRenderer.on("changeXP", handleXPChange);
     const expAlertElement = document.getElementById("expAlert");
     if (expAlertElement && expAlertRef.current) {
       expAlertRef.current.textContent = `+${xpGained}xp`;
     }
-    return () => {
-      ipcRenderer.removeAllListeners("changeXP", handleXPChange);
-    };
-  }, []);
+  }, [xpGained]);
   const getTaskDifficultyLabel = (difficulty: number): string => {
     if (difficulty >= 1 && difficulty <= 4) {
       return t("easy");
@@ -249,62 +192,10 @@ function TaskList() {
       return "Unknown";
     }
   };
-  useEffect(() => {
-    const handleDeleteTaskSuccess = (
-      event: IpcRendererEvent,
-      deletedIds: string[]
-    ) => {
-      clearDeletedTaskIds(deletedIds);
-      const updatedTaskList = pendingTasks.filter(
-        (task) => !deletedIds.includes(task.id || 0)
-      );
-      if (1 > 2) {
-        console.log(event);
-      }
-      setPendingTasks(updatedTaskList);
-
-      setTasksToDelete([]);
-    };
-
-    ipcRenderer.on("deleteTaskSuccess", handleDeleteTaskSuccess);
-
-    return () => {
-      ipcRenderer.removeAllListeners(
-        "deleteTaskSuccess",
-        handleDeleteTaskSuccess
-      );
-    };
-  }, [pendingTasks]);
-
-  const clearDeletedTaskIds = (deletedIds: string[]) => {
-    const savedTasks = localStorage.getItem("taskListPnd");
-    if (savedTasks) {
-      let updatedTasks = JSON.parse(savedTasks);
-      updatedTasks = updatedTasks.filter((task: Task) => {
-        return !deletedIds.some((deletedId) => deletedId === task.id);
-      });
-      localStorage.setItem("taskListPnd", JSON.stringify(updatedTasks));
-    }
-  };
-
-  const syncTasks = async () => {
-    const tasksToSave = localStorage.getItem("taskListPnd");
-    if (!tasksToSave) {
-      return;
-    }
-    try {
-      await ipcRenderer.send(
-        "SyncTasks",
-        JSON.parse(tasksToSave),
-        currentUser?.uid
-      );
-    } catch (error) {
-      console.error("Error syncing tasks:", error);
-    }
-  };
-
   const onDragEnd = async (result: any) => {
     if (!result.destination) return;
+    const uid = currentUser?.uid;
+    if (!uid) return;
     const updatedTasks = [...pendingTasks];
     const [reorderedTask] = updatedTasks.splice(result.source.index, 1);
     updatedTasks.splice(result.destination.index, 0, reorderedTask);
@@ -313,7 +204,16 @@ function TaskList() {
     });
     setPendingTasks(updatedTasks);
     localStorage.setItem("taskListPnd", JSON.stringify(updatedTasks));
-    syncTasks();
+    try {
+      await syncTaskOrders(
+        uid,
+        updatedTasks
+          .filter((t) => !!t.id)
+          .map((t) => ({ id: t.id as string, TaskOrder: t.TaskOrder }))
+      );
+    } catch (error) {
+      console.error("Error syncing tasks:", error);
+    }
   };
   const handleDetailClick = (taskId: string) => {
     setShowDetail((prevState) => ({
@@ -322,31 +222,11 @@ function TaskList() {
     }));
   };
   useEffect(() => {
-    if (1 > 2) {
-      console.log(taskList);
-    }
-    const fetchClasses = () => {
-      ipcRenderer.send("getTaskClasses", currentUser?.uid);
-    };
-
-    const handleShowClasses = (
-      event: IpcRendererEvent,
-      taskClasses: { className: string }[]
-    ) => {
-      const classNames = taskClasses.map((taskClass) => taskClass.className);
-      setClassOptions(classNames);
-      if (1 > 2) {
-        console.log(event);
-      }
-    };
-
-    fetchClasses();
-    ipcRenderer.on("showTaskClasses", handleShowClasses);
-
-    return () => {
-      ipcRenderer.removeAllListeners("showTaskClasses", handleShowClasses);
-    };
-  }, [taskList]);
+    const uid = currentUser?.uid;
+    if (!uid) return;
+    const unsub = subscribeTaskClasses(uid, (classes) => setClassOptions(classes));
+    return () => unsub();
+  }, [currentUser?.uid]);
 
   // const handleNewClass = async (event: IpcRendererEvent, lang: string) => {
   //   i18n.changeLanguage(lang);
@@ -374,8 +254,16 @@ function TaskList() {
     if (sortOrder === "difficulty") {
       return b.TaskDiff - a.TaskDiff; // Sort by difficulty in descending order
     } else if (sortOrder === "dueDate") {
+      const toMs = (d: any) => {
+        if (!d) return 0;
+        if (d instanceof Date) return d.getTime();
+        if (typeof d === "object" && "seconds" in d) {
+          return d.seconds * 1000 + Math.round((d as any).nanoseconds / 1000000);
+        }
+        return new Date(d).getTime();
+      };
       return (
-        new Date(a.TaskDueDate).getTime() - new Date(b.TaskDueDate).getTime()
+        toMs(a.TaskDueDate) - toMs(b.TaskDueDate)
       ); // Sort by due date in ascending order
     } else if (sortOrder === "alphabetical") {
       return a.TaskName.localeCompare(b.TaskName); // Sort by task name alphabetically
@@ -556,7 +444,7 @@ function TaskList() {
                               <img
                                 src={editImg}
                                 className="imgBtn editBtn"
-                                onClick={() => handleEditBtnClick(task)}
+                                onClick={() => onEditTask(task)}
                               />
                             </div>
                             <div className="taskCheckCont">

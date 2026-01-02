@@ -7,6 +7,7 @@
   height: 5.5rem;
   width: 100%;
   position: fixed;
+  z-index: 50;
 }
 
 .titlebar {
@@ -30,13 +31,21 @@
 }
 
 .btnBox button {
-  width: 1rem; /* Ancho de 1 rem */
-  height: 1rem; /* Alto de 1 rem */
-  padding: 0; /* Eliminar cualquier relleno */
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border-radius: 8px;
   background-color: transparent; /* Establecer el fondo del botón como transparente */
   border: none;
   cursor: pointer;
   margin-right: 0.3rem;
+  transition: transform 120ms ease, filter 120ms ease, background-color 120ms ease;
+}
+.btnBox button:hover {
+  background-color: rgba(0,0,0,0.10);
+}
+.btnBox button:active {
+  transform: translateY(1px);
 }
 
 .btnBox button img {

@@ -18,13 +18,14 @@ const AppContainer = () => {
     });
   }, []);
   useEffect(() => {
-    window.ipcRenderer.on('window-type', (_event, type) => {
+    const handleWindowType = (_event: any, type: string) => {
       setWindowType(type);
       console.log(type);
-    });
+    };
+    window.ipcRenderer.on('window-type', handleWindowType);
     
     return () => {
-      window.ipcRenderer.removeAllListeners('window-type');
+      window.ipcRenderer.off('window-type', handleWindowType);
     };
   }, []);
 
